@@ -29,6 +29,12 @@ public class Subject {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
+    @Column(name = "category", length = 100)
+    private String category;
+
     @ManyToOne
     @JoinColumn(name = "mentor_id", nullable = false)
     @JsonIgnore

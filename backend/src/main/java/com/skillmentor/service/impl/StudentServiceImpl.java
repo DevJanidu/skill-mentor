@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class StudentServiceImpl implements StudentService {
     private final UserService userService;
 
     @Override
+    @Transactional(readOnly = true)
     public List<StudentDTO> getAllStudents() {
         log.debug("Fetching all students");
         List<Student> students = studentRepository.findAll();
@@ -38,6 +40,7 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public StudentDTO getStudentById(Long id) {
         log.debug("Fetching student with id {}", id);
 
@@ -50,6 +53,7 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional
     public StudentDTO createStudent(CreateStudentDTO dto,String clerkId) {
         log.debug("Creating new student with id {}",clerkId);
         try {
@@ -86,6 +90,7 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional
     public StudentDTO updateStudent(UpdateStudentDTO dto, Long id) {
         log.debug("Updating student with id {}", id);
         try {
@@ -109,6 +114,7 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional
     public void deleteStudent(Long id) {
         try{
             User user = userService.getUserByStudentId(id);

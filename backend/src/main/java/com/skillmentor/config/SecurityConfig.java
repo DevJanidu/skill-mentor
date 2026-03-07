@@ -63,7 +63,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/webjars/**",
                                 "/swagger-resources/**",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/uploads/**"
                         ).permitAll()
 
                         // Public read-only access for browsing mentors & subjects

@@ -219,6 +219,7 @@ export default function ManageBookingsPage() {
                   ))}
                 </div>
               ) : filtered && filtered.length > 0 ? (
+                // eslint-disable-next-line react-hooks/static-components
                 <SessionTable items={filtered} />
               ) : (
                 <p className="text-sm text-zinc-500 py-6 text-center">

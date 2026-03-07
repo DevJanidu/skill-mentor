@@ -1,10 +1,10 @@
 import { useUser } from "@clerk/clerk-react";
 import { Navigate, Outlet } from "react-router-dom";
-import { getRoles } from "@/lib/roles";
+import { hasCompletedOnboarding } from "@/lib/roles";
 
 /**
  * Guard that ensures the signed-in user has completed onboarding
- * (i.e. has at least one role in publicMetadata.roles).
+ * (i.e. has STUDENT, MENTOR, or ADMIN role — not just the default USER role).
  * If not, redirects to /onboarding/role.
  */
 export default function OnboardingGuard() {
@@ -18,12 +18,11 @@ export default function OnboardingGuard() {
     );
   }
 
-  const roles = user
-    ? getRoles(user.publicMetadata as Record<string, unknown>)
-    : [];
-
-  // No roles means onboarding not completed
-  if (roles.length === 0) {
+  // USER-only role means onboarding not completed yet
+  if (
+    !user ||
+    !hasCompletedOnboarding(user.publicMetadata as Record<string, unknown>)
+  ) {
     return <Navigate to="/onboarding/role" replace />;
   }
 

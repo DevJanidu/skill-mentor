@@ -1,6 +1,7 @@
 package com.skillmentor.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.skillmentor.dto.session.ReceiptStatus;
 import com.skillmentor.dto.session.SessionStatus;
 import com.skillmentor.dto.session.SessionType;
 import jakarta.persistence.*;
@@ -52,7 +53,11 @@ public class Session {
     private Date sessionAt;
 
     private Integer durationMinutes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "session_status", length = 30)
     private SessionStatus sessionStatus;
+
     private String meetingLink;
 
     @Column(columnDefinition = "TEXT")
@@ -65,6 +70,26 @@ public class Session {
 
     @Column(name = "receipt_url", length = 500)
     private String receiptUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "receipt_status", length = 30)
+    @Builder.Default
+    private ReceiptStatus receiptStatus = ReceiptStatus.NONE;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "meeting_password", length = 100)
+    private String meetingPassword;
+
+    @Column(name = "recording_link", length = 500)
+    private String recordingLink;
+
+    @Column(name = "resource_link", length = 500)
+    private String resourceLink;
+
+    @Column(name = "assessment_link", length = 500)
+    private String assessmentLink;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

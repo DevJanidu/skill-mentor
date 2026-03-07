@@ -16,4 +16,10 @@ public class UpdateSubjectDTO {
 
     @Size(max = 1000)
     private String description;
+
+    @Size(max = 500, message = "Thumbnail URL cannot exceed 500 characters")
+    private String thumbnailUrl;
+
+    @Size(max = 100, message = "Category cannot exceed 100 characters")
+    private String category;
 }

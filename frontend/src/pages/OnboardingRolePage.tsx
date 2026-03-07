@@ -297,11 +297,17 @@ export default function OnboardingRolePage() {
     createMentor.isPending ||
     createStudent.isPending;
 
-  // Already onboarded → redirect
+  // Already onboarded (has STUDENT, MENTOR, or ADMIN role) → redirect away
   const existingRoles = user
     ? getRoles(user.publicMetadata as Record<string, unknown>)
     : [];
-  if (isLoaded && user && existingRoles.length > 0) {
+  if (
+    isLoaded &&
+    user &&
+    (existingRoles.includes("STUDENT") ||
+      existingRoles.includes("MENTOR") ||
+      existingRoles.includes("ADMIN"))
+  ) {
     if (existingRoles.includes("ADMIN"))
       return <Navigate to="/admin" replace />;
     return <Navigate to="/dashboard" replace />;

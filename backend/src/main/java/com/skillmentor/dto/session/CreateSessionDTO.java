@@ -12,7 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class CreateSessionDTO {
-    @NotEmpty(message = "At least one student is required")
+    /**
+     * Optional – when null/empty the session is created as an open slot
+     * that students can book later via POST /api/sessions/book.
+     */
     private List<Long> studentIds;
 
     @NotNull(message = "Mentor ID is required")
@@ -32,6 +35,7 @@ public class CreateSessionDTO {
     @Future(message = "Session must be scheduled in the future")
     private Date sessionAt;
 
+    @NotNull(message = "Duration is required")
     @Min(15)
     @Max(300)
     private Integer durationMinutes;

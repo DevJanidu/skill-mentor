@@ -24,6 +24,12 @@ const NAV_ITEMS = [
   },
   { label: "Subjects", href: "/admin/subjects", icon: BookOpen, end: false },
   { label: "Mentors", href: "/admin/mentors", icon: Users, end: false },
+  {
+    label: "Students",
+    href: "/admin/students",
+    icon: GraduationCap,
+    end: false,
+  },
 ] as const;
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {

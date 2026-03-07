@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useBookSession } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ export default function BookingDialog({
   defaultSubjectId,
 }: BookingDialogProps) {
   const bookSession = useBookSession();
+  const navigate = useNavigate();
 
   const [subjectId, setSubjectId] = useState(
     defaultSubjectId ? String(defaultSubjectId) : "",
@@ -46,12 +48,14 @@ export default function BookingDialog({
   const [sessionType, setSessionType] = useState<SessionType>("INDIVIDUAL");
   const [sessionAt, setSessionAt] = useState("");
   const [duration, setDuration] = useState(60);
+  const [maxParticipants, setMaxParticipants] = useState(5);
 
   const reset = () => {
     setSubjectId(defaultSubjectId ? String(defaultSubjectId) : "");
     setSessionType("INDIVIDUAL");
     setSessionAt("");
     setDuration(60);
+    setMaxParticipants(5);
   };
 
   const handleSubmit = () => {
@@ -64,11 +68,14 @@ export default function BookingDialog({
         sessionType,
         sessionAt: new Date(sessionAt).toISOString(),
         durationMinutes: duration,
+        ...(sessionType === "GROUP" && { maxParticipants }),
       },
       {
-        onSuccess: () => {
+        onSuccess: (bookedSession) => {
           onOpenChange(false);
           reset();
+          // Navigate directly to payment page with the real session ID
+          navigate(`/payment/${bookedSession.id}`);
         },
       },
     );
@@ -123,6 +130,28 @@ export default function BookingDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Max participants — only for GROUP */}
+          {sessionType === "GROUP" && (
+            <div className="space-y-2">
+              <Label>Max Participants</Label>
+              <Select
+                value={String(maxParticipants)}
+                onValueChange={(v) => setMaxParticipants(Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2, 3, 4, 5, 8, 10, 15, 20].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n} participants
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Date/time */}
           <div className="space-y-2">

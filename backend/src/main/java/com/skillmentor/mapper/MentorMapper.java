@@ -23,7 +23,7 @@ public class MentorMapper {
     public static MentorDTO toDto(Mentor savedMentor) {
         return MentorDTO.builder()
                 .id(savedMentor.getId())
-                .userId(savedMentor.getId())
+                .userId(savedMentor.getUser().getId())
                 .clerkId(savedMentor.getUser().getClerkId())
                 .fullName(savedMentor.getUser().getFullName())
                 .firstName(savedMentor.getUser().getFirstName())
@@ -37,6 +37,8 @@ public class MentorMapper {
                 .experienceYears(savedMentor.getExperienceYears())
                 .bio(savedMentor.getBio())
                 .profileImageUrl(savedMentor.getUser().getProfileImageUrl())
+                .averageRating(savedMentor.getAverageRating())
+                .totalReviews(savedMentor.getTotalReviews())
                 .createdAt(savedMentor.getCreatedAt())
                 .updatedAt(savedMentor.getUpdatedAt())
                 .build();

@@ -131,6 +131,9 @@ public class OnboardingController extends AbstractController {
 
             return sendOkResponse(response);
 
+        } catch (SkillMentorException e) {
+            // Let GlobalExceptionHandler return the correct HTTP status
+            throw e;
         } catch (Exception e) {
             log.error("Error completing onboarding", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

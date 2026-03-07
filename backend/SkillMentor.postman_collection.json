@@ -1,75 +1,18 @@
-{
+﻿{
   "info": {
-    "_postman_id": "skillmentor-v2-collection",
+    "_postman_id": "skillmentor-v4",
     "name": "SkillMentor API",
-    "description": "# SkillMentor REST API\n\nComplete API collection for the SkillMentor online mentoring platform.\n\n---\n\n## Quick Setup\n\n1. Import `SkillMentor.postman_environment.json` alongside this file.\n2. Select **SkillMentor – Dev** from the environment dropdown (top-right).\n3. Set `clerk_token` to a valid Clerk JWT ( run `await window.Clerk.session.getToken()` in your browser console on the frontend).\n4. Call **POST Users › Sync Current User** first to seed your user into the DB.\n\n---\n\n## Authentication\n\nAll endpoints (except Swagger & Health) require a Clerk JWT.\nEvery request in this collection automatically inherits `Authorization: Bearer {{clerk_token}}`.\n\nTo test role-restricted endpoints, paste the appropriate token into `clerk_token`.\n\n| Environment Variable | Role |\n|---|---|\n| `admin_token` | ADMIN |\n| `mentor_token` | MENTOR |\n| `student_token` | STUDENT |\n\n---\n\n## Roles Reference\n\n| Role | Description |\n|---|---|\n| `USER` | Default after sign-up. Must complete onboarding first |\n| `STUDENT` | Can browse mentors, enrol in sessions, track learning |\n| `MENTOR` | Manages own profile, subjects, and sessions |\n| `ADMIN` | Full platform control — all endpoints |\n\n---\n\n## Error Response Shape\n\n```json\n{\n  \"success\": false,\n  \"message\": \"Descriptive error message\",\n  \"errors\": { \"fieldName\": \"Validation message\" },\n  \"timestamp\": \"2026-03-04T10:00:00Z\",\n  \"path\": \"/api/sessions\"\n}\n```\n\n---\n\n## Base URL\n\n`{{base_url}}` → defaults to `http://localhost:8080`",
+    "description": "Complete SkillMentor REST API collection. Copy your JWT from /dev/token (admin) or the Dashboard JWT card, paste into the `clerk_token` environment variable, then run any request.\n\nRole legend:\n Any authenticated = any signed-in user\n STUDENT / MENTOR / ADMIN = that role required",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{clerk_token}}",
-        "type": "string"
-      }
-    ]
+    "bearer": [{ "key": "token", "value": "{{clerk_token}}", "type": "string" }]
   },
+  "variable": [{ "key": "base_url", "value": "http://localhost:8080" }],
   "item": [
     {
-      "name": "🔧 System",
-      "description": "Health check and API documentation endpoints. **No authentication required.**",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/actuator/health",
-              "host": ["{{base_url}}"],
-              "path": ["actuator", "health"]
-            },
-            "description": "Spring Boot Actuator health endpoint. Returns `{\"status\": \"UP\"}` when the server and database are healthy.\n\n**Auth:** None required"
-          },
-          "response": []
-        },
-        {
-          "name": "Swagger UI",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/swagger-ui.html",
-              "host": ["{{base_url}}"],
-              "path": ["swagger-ui.html"]
-            },
-            "description": "Opens the interactive Swagger UI. Best viewed in a browser.\n\n**Auth:** None required"
-          },
-          "response": []
-        },
-        {
-          "name": "OpenAPI Spec (JSON)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/v3/api-docs",
-              "host": ["{{base_url}}"],
-              "path": ["v3", "api-docs"]
-            },
-            "description": "Returns the full OpenAPI 3.0 specification as JSON.\n\n**Auth:** None required"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "👤 Users",
-      "description": "User synchronization and profile retrieval.\n\nThe `/sync` endpoint must be called after a user's first login, or after any role change, to upsert their Clerk identity into the local PostgreSQL database.",
+      "name": "Users",
       "item": [
         {
           "name": "Sync Current User",
@@ -81,12 +24,11 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "sync"]
             },
-            "description": "Reads the authenticated user's Clerk JWT and upserts their record (email, name, roles, profile image) in the local database.\n\n**Call this after every login or role change before hitting other endpoints.**\n\n**Auth:** Any authenticated user\n\n**Returns** `UserDTO`:\n```json\n{\n  \"id\": 1,\n  \"clerkId\": \"user_2abc123\",\n  \"email\": \"jane@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"fullName\": \"Jane Doe\",\n  \"roles\": [\"STUDENT\"],\n  \"profileImageUrl\": \"https://img.clerk.com/...\",\n  \"onboardingCompleted\": true,\n  \"lastLogin\": \"2026-03-04T10:00:00\"\n}\n```"
-          },
-          "response": []
+            "description": "Sync the JWT user into the DB. Call after every login. Role: any authenticated."
+          }
         },
         {
-          "name": "Get Current User (Me)",
+          "name": "Get Current User (me)",
           "request": {
             "method": "GET",
             "header": [],
@@ -95,30 +37,53 @@
               "host": ["{{base_url}}"],
               "path": ["api", "users", "me"]
             },
-            "description": "Fetches the local database record for the currently authenticated user by their Clerk ID.\n\n**Auth:** Any authenticated user\n\n**Returns** `UserDTO`"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "🚀 Onboarding",
-      "description": "New-user onboarding flow and role management.\n\n**Typical flow for a new user:**\n1. User signs up via Clerk → given default role `USER`\n2. Frontend calls `GET /api/onboarding/status` to check if onboarding is needed\n3. User selects a role → Frontend calls `POST /api/onboarding/complete`\n4. Frontend calls `POST /api/users/sync` to refresh the DB record\n5. Clerk JWT now carries the new role in every subsequent request",
-      "item": [
+            "description": "Returns the DB user for the current JWT. Role: any authenticated."
+          }
+        },
         {
-          "name": "Get Onboarding Status",
+          "name": "Get All Users",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/onboarding/status",
+              "raw": "{{base_url}}/api/users",
               "host": ["{{base_url}}"],
-              "path": ["api", "onboarding", "status"]
+              "path": ["api", "users"]
             },
-            "description": "Checks whether the current user has completed onboarding in both the DB and Clerk.\n\n**Auth:** Any authenticated user\n\n**Returns:**\n```json\n{\n  \"completed\": true,\n  \"clerkId\": \"user_2abc123\",\n  \"email\": \"jane@example.com\",\n  \"roles\": [\"STUDENT\"]\n}\n```"
-          },
-          "response": []
+            "description": "Role: ADMIN."
+          }
         },
+        {
+          "name": "Get User by Clerk ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{clerk_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{clerk_id}}"]
+            },
+            "description": "Role: ADMIN."
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{clerk_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{clerk_id}}"]
+            },
+            "description": "Role: ADMIN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Onboarding",
+      "item": [
         {
           "name": "Complete Onboarding",
           "request": {
@@ -134,9 +99,21 @@
               "host": ["{{base_url}}"],
               "path": ["api", "onboarding", "complete"]
             },
-            "description": "Assigns a role to the authenticated user and marks onboarding as complete. Throws `400 Bad Request` if called a second time on an already-onboarded user.\n\n**Auth:** Any authenticated user (must NOT already be onboarded)\n\n**Request body:**\n\n| Field | Type | Required | Accepted values |\n|---|---|---|---|\n| `role` | string | ✅ | `STUDENT` \\| `MENTOR` \\| `ADMIN` \\| `USER` |\n\n**Returns** `OnboardingResponse`:\n```json\n{\n  \"success\": true,\n  \"message\": \"Onboarding completed successfully\",\n  \"userId\": \"1\",\n  \"clerkId\": \"user_2abc123\",\n  \"email\": \"jane@example.com\",\n  \"roles\": [\"STUDENT\"]\n}\n```"
-          },
-          "response": []
+            "description": "Select a role for the current user. Values: STUDENT | MENTOR. Role: any authenticated."
+          }
+        },
+        {
+          "name": "Get Onboarding Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/onboarding/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "onboarding", "status"]
+            },
+            "description": "Check if current user has completed onboarding. Role: any authenticated."
+          }
         },
         {
           "name": "Get My Roles",
@@ -148,18 +125,17 @@
               "host": ["{{base_url}}"],
               "path": ["api", "onboarding", "my-roles"]
             },
-            "description": "Returns the roles currently assigned to the authenticated user, read directly from Clerk public metadata.\n\n**Auth:** Any authenticated user\n\n**Returns:**\n```json\n{\n  \"clerkId\": \"user_2abc123\",\n  \"email\": \"jane@example.com\",\n  \"roles\": [\"MENTOR\"]\n}\n```"
-          },
-          "response": []
+            "description": "Returns roles from Clerk for current user. Role: any authenticated."
+          }
         },
         {
-          "name": "Update User Roles  ⟨ADMIN ONLY⟩",
+          "name": "Update User Roles (Admin)",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clerkId\": \"user_2xxxxxxxxxxxxxxxx\",\n  \"roles\": [\"MENTOR\"]\n}",
+              "raw": "{\n  \"clerkId\": \"{{clerk_id}}\",\n  \"roles\": [\"ADMIN\"]\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -167,15 +143,13 @@
               "host": ["{{base_url}}"],
               "path": ["api", "onboarding", "roles"]
             },
-            "description": "Overrides the roles of any user by their Clerk ID. Updates Clerk public metadata directly.\n\n**Auth:** `ADMIN` only\n\n> ⚠️ Paste `{{admin_token}}` into `clerk_token` before calling this.\n\n**Request body:**\n\n| Field | Type | Required | Description |\n|---|---|---|---|\n| `clerkId` | string | ✅ | Target user's Clerk ID (starts with `user_`) |\n| `roles` | string[] | ✅ | `[\"ADMIN\"]` \\| `[\"MENTOR\"]` \\| `[\"STUDENT\"]` \\| `[\"USER\"]` |\n\n**Returns** `OnboardingResponse`:\n```json\n{\n  \"success\": true,\n  \"message\": \"User roles updated successfully\",\n  \"clerkId\": \"user_2xxxxxxxxxxxxxxxx\",\n  \"roles\": [\"MENTOR\"]\n}\n```"
-          },
-          "response": []
+            "description": "Override roles for any user. Role: ADMIN."
+          }
         }
       ]
     },
     {
-      "name": "🧑‍🏫 Mentors",
-      "description": "Mentor profile CRUD.\n\nGET endpoints have no role restriction at the controller level, but `SecurityConfig` requires a valid JWT for all `/api/**` paths. Write operations are restricted to `ADMIN` or `MENTOR`.",
+      "name": "Mentors",
       "item": [
         {
           "name": "Get All Mentors",
@@ -187,9 +161,31 @@
               "host": ["{{base_url}}"],
               "path": ["api", "mentors"]
             },
-            "description": "Returns all mentor profiles with linked user information.\n\n**Auth:** Any authenticated user\n\n**Returns** `MentorDTO[]`:\n```json\n[\n  {\n    \"id\": 1,\n    \"userId\": 2,\n    \"clerkId\": \"user_2abc123\",\n    \"firstName\": \"Rohan\",\n    \"lastName\": \"Silva\",\n    \"email\": \"rohan@example.com\",\n    \"fullName\": \"Rohan Silva\",\n    \"phoneNumber\": \"+94771234567\",\n    \"title\": \"Senior Software Engineer\",\n    \"profession\": \"Software Engineering\",\n    \"company\": \"Tech Corp\",\n    \"experienceYears\": 5,\n    \"bio\": \"Passionate about clean architecture...\",\n    \"createdAt\": \"2026-03-01T10:00:00\",\n    \"updatedAt\": \"2026-03-04T08:00:00\"\n  }\n]\n```"
-          },
-          "response": []
+            "description": "Public - no auth required."
+          }
+        },
+        {
+          "name": "Search Mentors (paged)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/mentors/search?name={{mentor_search_name}}&profession={{mentor_search_profession}}&page=0&size=10&sort=id,asc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "mentors", "search"],
+              "query": [
+                { "key": "name", "value": "{{mentor_search_name}}" },
+                {
+                  "key": "profession",
+                  "value": "{{mentor_search_profession}}"
+                },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "id,asc" }
+              ]
+            },
+            "description": "Public - paginated mentor search by name/profession."
+          }
         },
         {
           "name": "Get Mentor by ID",
@@ -201,12 +197,11 @@
               "host": ["{{base_url}}"],
               "path": ["api", "mentors", "{{mentor_id}}"]
             },
-            "description": "Returns a single mentor profile.\n\n**Auth:** Any authenticated user\n\n**Path variable:** `mentor_id` — update in environment\n\n**Returns** `MentorDTO`"
-          },
-          "response": []
+            "description": "Public - no auth required."
+          }
         },
         {
-          "name": "Get Mentor Sessions",
+          "name": "Get Sessions by Mentor",
           "request": {
             "method": "GET",
             "header": [],
@@ -215,18 +210,17 @@
               "host": ["{{base_url}}"],
               "path": ["api", "mentors", "{{mentor_id}}", "sessions"]
             },
-            "description": "Returns all sessions linked to a specific mentor.\n\n**Auth:** `ADMIN` | `MENTOR` | `STUDENT`\n\n**Path variable:** `mentor_id`\n\n**Returns** `SessionDTO[]`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR | STUDENT."
+          }
         },
         {
-          "name": "Create Mentor Profile  ⟨ADMIN | MENTOR⟩",
+          "name": "Create Mentor Profile",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"+94771234567\",\n  \"title\": \"Senior Software Engineer\",\n  \"profession\": \"Software Engineering\",\n  \"company\": \"Tech Corp (Pvt) Ltd\",\n  \"experienceYears\": 5,\n  \"bio\": \"Passionate backend engineer specialising in Spring Boot and distributed systems.\"\n}",
+              "raw": "{\n  \"phoneNumber\": \"+94771234567\",\n  \"title\": \"Mr\",\n  \"profession\": \"Software Engineer\",\n  \"company\": \"Tech Corp\",\n  \"experienceYears\": 5,\n  \"bio\": \"Passionate about teaching web development.\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -234,18 +228,17 @@
               "host": ["{{base_url}}"],
               "path": ["api", "mentors"]
             },
-            "description": "Creates a mentor profile linked to the JWT owner's user account.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Request body — field constraints:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `phoneNumber` | string | ✅ | Valid Sri Lankan mobile: `+94XXXXXXXXX` or `07XXXXXXXX` |\n| `title` | string | ✅ | 2–20 characters (e.g. `\"Senior Engineer\"`) |\n| `profession` | string | ✅ | 2–50 characters |\n| `company` | string | ✅ | 2–60 characters |\n| `experienceYears` | int | ✅ | 0–50 |\n| `bio` | string | ❌ | Max 500 characters |\n\n**Returns** `MentorDTO` with HTTP `201 Created`"
-          },
-          "response": []
+            "description": "Phone: Sri Lankan format (+94 / 07x). Role: any authenticated (MENTOR role)."
+          }
         },
         {
-          "name": "Update Mentor Profile  ⟨ADMIN | MENTOR⟩",
+          "name": "Update Mentor",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"+94771234567\",\n  \"title\": \"Lead Software Engineer\",\n  \"profession\": \"Software Engineering\",\n  \"company\": \"Tech Corp (Pvt) Ltd\",\n  \"experienceYears\": 7,\n  \"bio\": \"Now specialising in microservices, event-driven architecture, and cloud-native Spring.\"\n}",
+              "raw": "{\n  \"phoneNumber\": \"+94771234567\",\n  \"title\": \"Dr\",\n  \"profession\": \"Senior Engineer\",\n  \"company\": \"New Corp\",\n  \"experienceYears\": 8,\n  \"bio\": \"Updated bio.\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -253,12 +246,11 @@
               "host": ["{{base_url}}"],
               "path": ["api", "mentors", "{{mentor_id}}"]
             },
-            "description": "Replaces all editable fields of a mentor profile.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `mentor_id`\n\nSame field constraints as Create Mentor Profile.\n\n**Returns** `MentorDTO`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR."
+          }
         },
         {
-          "name": "Delete Mentor  ⟨ADMIN | MENTOR⟩",
+          "name": "Delete Mentor",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -267,115 +259,13 @@
               "host": ["{{base_url}}"],
               "path": ["api", "mentors", "{{mentor_id}}"]
             },
-            "description": "Permanently deletes a mentor profile.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `mentor_id`\n\n**Returns:** `\"mentor deleted with id (1)\"`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR."
+          }
         }
       ]
     },
     {
-      "name": "🎓 Students",
-      "description": "Student profile CRUD.\n\nA user must complete onboarding with role `STUDENT` before creating a student profile via POST.",
-      "item": [
-        {
-          "name": "Get All Students  ⟨ADMIN | STUDENT⟩",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/students",
-              "host": ["{{base_url}}"],
-              "path": ["api", "students"]
-            },
-            "description": "Returns all student profiles.\n\n**Auth:** `ADMIN` | `STUDENT`\n\n**Returns** `StudentDTO[]`:\n```json\n[\n  {\n    \"id\": 1,\n    \"userId\": 3,\n    \"clerkId\": \"user_2xyz789\",\n    \"email\": \"nimal@example.com\",\n    \"firstName\": \"Nimal\",\n    \"lastName\": \"Perera\",\n    \"studentCode\": \"STU001\",\n    \"learningGoals\": \"Master Spring Boot and REST API design.\"\n  }\n]\n```"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Student by ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/students/{{student_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "students", "{{student_id}}"]
-            },
-            "description": "Returns a single student profile by DB ID.\n\n**Auth:** Any authenticated user\n\n**Path variable:** `student_id`\n\n**Returns** `StudentDTO`"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Student Sessions  ⟨ADMIN | STUDENT⟩",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/students/{{student_id}}/sessions",
-              "host": ["{{base_url}}"],
-              "path": ["api", "students", "{{student_id}}", "sessions"]
-            },
-            "description": "Returns all sessions a student is enrolled in.\n\n**Auth:** `ADMIN` | `STUDENT`\n\n**Path variable:** `student_id`\n\n**Returns** `SessionDTO[]`"
-          },
-          "response": []
-        },
-        {
-          "name": "Register Student Profile  ⟨ADMIN | STUDENT⟩",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"studentCode\": \"STU001\",\n  \"learningGoals\": \"I want to master Spring Boot, REST API design, and eventually move into system architecture.\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/api/students",
-              "host": ["{{base_url}}"],
-              "path": ["api", "students"]
-            },
-            "description": "Creates a student profile linked to the JWT owner's user account.\n\n**Auth:** `ADMIN` | `STUDENT`\n\n**Request body — field constraints:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `studentCode` | string | ✅ | 3–20 characters, must be unique across all students |\n| `learningGoals` | string | ❌ | Max 2000 characters |\n\n**Returns** `StudentDTO` with HTTP `201 Created`"
-          },
-          "response": []
-        },
-        {
-          "name": "Update Student Profile  ⟨ADMIN | STUDENT⟩",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"learningGoals\": \"Updated focus: system design, distributed systems, Kafka, and cloud-native patterns.\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/api/students/{{student_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "students", "{{student_id}}"]
-            },
-            "description": "Updates a student's learning goals.\n\n**Auth:** `ADMIN` | `STUDENT`\n\n**Path variable:** `student_id`\n\n**Request body:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `learningGoals` | string | ❌ | Max 2000 characters |\n\n**Returns** `StudentDTO`"
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Student  ⟨ADMIN | STUDENT⟩",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/students/{{student_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "students", "{{student_id}}"]
-            },
-            "description": "Permanently deletes a student profile.\n\n**Auth:** `ADMIN` | `STUDENT`\n\n**Path variable:** `student_id`\n\n**Returns:** `\"Student deleted with id (1)\"`"
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "📚 Subjects",
-      "description": "Subject management. Subjects are always associated with a mentor.\n\nGET endpoints require a JWT (enforced globally). Write operations require `ADMIN` or `MENTOR`.",
+      "name": "Subjects",
       "item": [
         {
           "name": "Get All Subjects",
@@ -387,9 +277,8 @@
               "host": ["{{base_url}}"],
               "path": ["api", "subjects"]
             },
-            "description": "Returns all subjects with mentor associations.\n\n**Auth:** Any authenticated user\n\n**Returns** `SubjectDTO[]`:\n```json\n[\n  {\n    \"id\": 1,\n    \"subjectName\": \"Spring Boot Fundamentals\",\n    \"description\": \"REST APIs with Spring Boot: controllers, services, JPA, security.\",\n    \"mentorId\": 1,\n    \"mentorName\": \"Rohan Silva\",\n    \"createdAt\": \"2026-03-01T10:00:00\",\n    \"updatedAt\": \"2026-03-04T08:00:00\"\n  }\n]\n```"
-          },
-          "response": []
+            "description": "Public - no auth required."
+          }
         },
         {
           "name": "Get Subject by ID",
@@ -401,18 +290,17 @@
               "host": ["{{base_url}}"],
               "path": ["api", "subjects", "{{subject_id}}"]
             },
-            "description": "Returns a single subject.\n\n**Auth:** Any authenticated user\n\n**Path variable:** `subject_id`\n\n**Returns** `SubjectDTO`"
-          },
-          "response": []
+            "description": "Public - no auth required."
+          }
         },
         {
-          "name": "Create Subject  ⟨ADMIN | MENTOR⟩",
+          "name": "Create Subject",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Spring Boot Fundamentals\",\n  \"description\": \"A hands-on course covering Spring Boot: REST controllers, service layer, JPA repositories, Bean Validation, and security.\",\n  \"mentorId\": 1\n}",
+              "raw": "{\n  \"name\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn Spring Boot from scratch.\",\n  \"thumbnailUrl\": \"https://res.cloudinary.com/demo/image/upload/example-thumbnail.jpg\",\n  \"category\": \"Programming\",\n  \"mentorId\": {{mentor_id}}\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -420,18 +308,17 @@
               "host": ["{{base_url}}"],
               "path": ["api", "subjects"]
             },
-            "description": "Creates a new subject and assigns it to a mentor.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Request body — field constraints:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `name` | string | ✅ | 3–100 characters |\n| `description` | string | ❌ | Max 1000 characters |\n| `mentorId` | number | ✅ | Must be a valid mentor DB ID |\n\n**Returns** `SubjectDTO` with HTTP `201 Created`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR. thumbnailUrl/category are optional but recommended."
+          }
         },
         {
-          "name": "Update Subject  ⟨ADMIN | MENTOR⟩",
+          "name": "Update Subject",
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Advanced Spring Boot\",\n  \"description\": \"Deep dive: microservices, Redis caching, Spring Security JWT, and cloud-native deployment patterns.\"\n}",
+              "raw": "{\n  \"name\": \"Advanced Spring Boot\",\n  \"description\": \"Deep dive into Spring Boot.\",\n  \"thumbnailUrl\": \"https://res.cloudinary.com/demo/image/upload/updated-thumbnail.jpg\",\n  \"category\": \"Programming\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -439,12 +326,11 @@
               "host": ["{{base_url}}"],
               "path": ["api", "subjects", "{{subject_id}}"]
             },
-            "description": "Updates the name and description of a subject. Mentor association cannot be changed.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `subject_id`\n\n**Request body:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `name` | string | ✅ | 3–100 characters |\n| `description` | string | ❌ | Max 1000 characters |\n\n**Returns** `SubjectDTO`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR. thumbnailUrl/category are optional."
+          }
         },
         {
-          "name": "Delete Subject  ⟨ADMIN | MENTOR⟩",
+          "name": "Delete Subject",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -453,18 +339,129 @@
               "host": ["{{base_url}}"],
               "path": ["api", "subjects", "{{subject_id}}"]
             },
-            "description": "Permanently deletes a subject.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `subject_id`\n\n**Returns:** `\"subjected deleted with id (1)\"`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR."
+          }
         }
       ]
     },
     {
-      "name": "📅 Sessions",
-      "description": "Session scheduling and lifecycle management.\n\n---\n\n**Session Lifecycle:**\n```\nPENDING → SCHEDULED → STARTED → COMPLETED\n                              ↘ CANCELED (any stage)\n```\n\n---\n\n**Session Types:**\n\n| Type | Description |\n|---|---|\n| `INDIVIDUAL` | One student; server **auto-corrects** `maxParticipants` to `1` |\n| `GROUP` | Multiple students; set `maxParticipants` (1–50) |\n\n---\n\n**Business Rules (enforced server-side):**\n- `sessionAt` must be a **future** date/time\n- All provided `studentIds` must exist in the DB\n- Mentor availability is validated against overlapping time slots via `SessionAvailabilityUtil`\n- `durationMinutes` accepted range: 15–300\n- `maxParticipants` accepted range: 1–50",
+      "name": "Subjects",
       "item": [
         {
-          "name": "Get All Sessions  ⟨ADMIN | MENTOR⟩",
+          "name": "Get All Subjects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects"]
+            },
+            "description": "Public - no auth required."
+          }
+        },
+        {
+          "name": "Search Subjects (paged)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subjects/search?name={{subject_search_name}}&category={{subject_search_category}}&page=0&size=10&sort=name,asc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects", "search"],
+              "query": [
+                { "key": "name", "value": "{{subject_search_name}}" },
+                { "key": "category", "value": "{{subject_search_category}}" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "name,asc" }
+              ]
+            },
+            "description": "Public - paginated subject search by name/category."
+          }
+        },
+        {
+          "name": "Get Student by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{student_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "{{student_id}}"]
+            },
+            "description": "Role: any authenticated."
+          }
+        },
+        {
+          "name": "Get Sessions by Student",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{student_id}}/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "{{student_id}}", "sessions"]
+            },
+            "description": "Role: ADMIN | STUDENT."
+          }
+        },
+        {
+          "name": "Register Student Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentCode\": \"STU001\",\n  \"learningGoals\": \"Master full-stack development.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students"]
+            },
+            "description": "Role: any authenticated (STUDENT role)."
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"learningGoals\": \"Master React and Spring Boot.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/students/{{student_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "{{student_id}}"]
+            },
+            "description": "Role: ADMIN | STUDENT."
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/students/{{student_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "students", "{{student_id}}"]
+            },
+            "description": "Role: ADMIN | STUDENT."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions  CRUD (Mentor/Admin)",
+      "item": [
+        {
+          "name": "Get All Sessions",
           "request": {
             "method": "GET",
             "header": [],
@@ -473,12 +470,11 @@
               "host": ["{{base_url}}"],
               "path": ["api", "sessions"]
             },
-            "description": "Returns every session in the platform.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Returns** `SessionDTO[]`:\n```json\n[\n  {\n    \"id\": 1,\n    \"mentorId\": 1,\n    \"mentorName\": \"Rohan Silva\",\n    \"subjectId\": 1,\n    \"subjectName\": \"Spring Boot Fundamentals\",\n    \"sessionAt\": \"2026-07-15T10:00:00.000+00:00\",\n    \"durationMinutes\": 60,\n    \"maxParticipants\": 1,\n    \"sessionType\": \"INDIVIDUAL\",\n    \"sessionStatus\": \"SCHEDULED\",\n    \"meetingLink\": \"https://meet.google.com/abc-defg-hij\",\n    \"sessionNotes\": null,\n    \"studentReview\": null,\n    \"studentRating\": null\n  }\n]\n```"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR."
+          }
         },
         {
-          "name": "Get Session by ID  ⟨ADMIN | MENTOR⟩",
+          "name": "Get Session by ID",
           "request": {
             "method": "GET",
             "header": [],
@@ -487,26 +483,60 @@
               "host": ["{{base_url}}"],
               "path": ["api", "sessions", "{{session_id}}"]
             },
-            "description": "Returns a single session by DB ID.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `session_id` (must be ≥ 1)\n\n**Returns** `SessionDTO`"
-          },
-          "response": []
+            "description": "Role: ADMIN | MENTOR."
+          }
         },
         {
-          "name": "Get Sessions by Student  ⟨ADMIN | STUDENT⟩",
+          "name": "Create Session (Mentor)",
           "request": {
-            "method": "GET",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentIds\": [{{student_id}}],\n  \"mentorId\": {{mentor_id}},\n  \"subjectId\": {{subject_id}},\n  \"sessionType\": \"INDIVIDUAL\",\n  \"maxParticipants\": 1,\n  \"sessionAt\": \"2026-06-01T10:00:00.000Z\",\n  \"durationMinutes\": 60\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"]
+            },
+            "description": "Mentor manually creates a session. sessionType: INDIVIDUAL | GROUP. Role: ADMIN | MENTOR."
+          }
+        },
+        {
+          "name": "Update Session",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionAt\": \"2026-06-02T10:00:00.000Z\",\n  \"durationMinutes\": 90,\n  \"sessionStatus\": \"SCHEDULED\",\n  \"sessionType\": \"INDIVIDUAL\",\n  \"maxParticipants\": 1,\n  \"meetingLink\": \"https://meet.google.com/xxx-yyyy-zzz\",\n  \"sessionNotes\": \"Updated notes.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}"]
+            },
+            "description": "Full update. sessionStatus: PENDING | SCHEDULED | STARTED | COMPLETED | CANCELED. Role: ADMIN | MENTOR."
+          }
+        },
+        {
+          "name": "Delete Session",
+          "request": {
+            "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/sessions/student/{{student_id}}",
+              "raw": "{{base_url}}/api/sessions/{{session_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "sessions", "student", "{{student_id}}"]
+              "path": ["api", "sessions", "{{session_id}}"]
             },
-            "description": "Returns all sessions a specific student is enrolled in.\n\n**Auth:** `ADMIN` | `STUDENT`\n\n**Path variable:** `student_id` (must be ≥ 1)\n\n**Returns** `SessionDTO[]`"
-          },
-          "response": []
+            "description": "Hard delete. Role: ADMIN | MENTOR."
+          }
         },
         {
-          "name": "Get Sessions by Mentor  ⟨ADMIN | MENTOR⟩",
+          "name": "Get Sessions by Mentor",
           "request": {
             "method": "GET",
             "header": [],
@@ -515,61 +545,240 @@
               "host": ["{{base_url}}"],
               "path": ["api", "sessions", "mentor", "{{mentor_id}}"]
             },
-            "description": "Returns all sessions run by a specific mentor.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `mentor_id` (must be ≥ 1)\n\n**Returns** `SessionDTO[]`"
-          },
-          "response": []
-        },
+            "description": "Role: ADMIN | MENTOR."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions  Student Booking",
+      "item": [
         {
-          "name": "Create Session  ⟨ADMIN | MENTOR⟩",
+          "name": "Book Session (Student)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"studentIds\": [1],\n  \"mentorId\": 1,\n  \"subjectId\": 1,\n  \"sessionType\": \"INDIVIDUAL\",\n  \"maxParticipants\": 1,\n  \"sessionAt\": \"2026-07-15T10:00:00.000Z\",\n  \"durationMinutes\": 60\n}",
+              "raw": "{\n  \"mentorId\": {{mentor_id}},\n  \"subjectId\": {{subject_id}},\n  \"sessionAt\": \"2026-06-01T10:00:00.000Z\",\n  \"durationMinutes\": 60,\n  \"sessionType\": \"INDIVIDUAL\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{base_url}}/api/sessions",
+              "raw": "{{base_url}}/api/sessions/book",
               "host": ["{{base_url}}"],
-              "path": ["api", "sessions"]
+              "path": ["api", "sessions", "book"]
             },
-            "description": "Schedules a new mentoring session.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Request body — field constraints:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `studentIds` | number[] | ✅ | At least 1 valid student DB ID |\n| `mentorId` | number | ✅ | Valid mentor DB ID |\n| `subjectId` | number | ✅ | Valid subject DB ID |\n| `sessionType` | string | ✅ | `INDIVIDUAL` \\| `GROUP` |\n| `maxParticipants` | number | ❌ | 1–50; **auto-set to 1 for INDIVIDUAL** |\n| `sessionAt` | ISO 8601 | ✅ | Must be a **future** date/time |\n| `durationMinutes` | number | ❌ | 15–300 |\n\n**Example — GROUP session:**\n```json\n{\n  \"studentIds\": [1, 2, 3],\n  \"mentorId\": 1,\n  \"subjectId\": 1,\n  \"sessionType\": \"GROUP\",\n  \"maxParticipants\": 10,\n  \"sessionAt\": \"2026-08-20T14:00:00.000Z\",\n  \"durationMinutes\": 90\n}\n```\n\n**Returns** `SessionDTO` with HTTP `201 Created`"
-          },
-          "response": []
+            "description": "Student self-books a session. sessionType: INDIVIDUAL | GROUP. Role: ADMIN | STUDENT."
+          }
         },
         {
-          "name": "Update Session  ⟨ADMIN | MENTOR⟩",
+          "name": "Get Sessions by Student",
           "request": {
-            "method": "PUT",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/student/{{student_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "student", "{{student_id}}"]
+            },
+            "description": "Role: ADMIN | STUDENT."
+          }
+        },
+        {
+          "name": "Submit Payment Receipt",
+          "request": {
+            "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"sessionAt\": \"2026-07-20T14:00:00.000Z\",\n  \"durationMinutes\": 90,\n  \"sessionStatus\": \"SCHEDULED\",\n  \"sessionType\": \"INDIVIDUAL\",\n  \"maxParticipants\": 1,\n  \"meetingLink\": \"https://meet.google.com/abc-defg-hij\",\n  \"sessionNotes\": \"Review Spring Security, JWT internals, and method-level authorization.\",\n  \"studentReview\": null,\n  \"studentRating\": null\n}",
+              "raw": "{\n  \"receiptUrl\": \"https://res.cloudinary.com/demo/image/upload/receipt.jpg\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{base_url}}/api/sessions/{{session_id}}",
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/submit-receipt",
               "host": ["{{base_url}}"],
-              "path": ["api", "sessions", "{{session_id}}"]
+              "path": ["api", "sessions", "{{session_id}}", "submit-receipt"]
             },
-            "description": "Updates fields of an existing session including advancing its status.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `session_id` (must be ≥ 1)\n\n**Request body — field constraints:**\n\n| Field | Type | Required | Rules |\n|---|---|---|---|\n| `sessionStatus` | string | ✅ | `PENDING` \\| `SCHEDULED` \\| `STARTED` \\| `COMPLETED` \\| `CANCELED` |\n| `sessionType` | string | ✅ | `INDIVIDUAL` \\| `GROUP` |\n| `sessionAt` | ISO 8601 | ❌ | Must be future if provided |\n| `durationMinutes` | number | ❌ | 15–300 |\n| `maxParticipants` | number | ❌ | 1–50 |\n| `meetingLink` | string | ❌ | Max 500 characters |\n| `sessionNotes` | string | ❌ | Max 2000 characters |\n| `studentReview` | string | ❌ | Max 2000 characters |\n| `studentRating` | number | ❌ | 1–5 |\n\n---\n\n**Mark session as COMPLETED with review:**\n```json\n{\n  \"sessionStatus\": \"COMPLETED\",\n  \"sessionType\": \"INDIVIDUAL\",\n  \"studentReview\": \"Excellent session — very clear explanations!\",\n  \"studentRating\": 5\n}\n```\n\n**Add meeting link (SCHEDULED → ready):**\n```json\n{\n  \"sessionStatus\": \"SCHEDULED\",\n  \"sessionType\": \"INDIVIDUAL\",\n  \"meetingLink\": \"https://meet.google.com/xyz-abcd-efg\"\n}\n```\n\n**Returns** `SessionDTO`"
-          },
-          "response": []
+            "description": "Student uploads Cloudinary receipt URL. Role: ADMIN | STUDENT."
+          }
         },
         {
-          "name": "Delete Session  ⟨ADMIN | MENTOR⟩",
+          "name": "Cancel Session (Student)",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/sessions/{{session_id}}",
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/cancel",
               "host": ["{{base_url}}"],
-              "path": ["api", "sessions", "{{session_id}}"]
+              "path": ["api", "sessions", "{{session_id}}", "cancel"]
             },
-            "description": "Permanently deletes a session.\n\n**Auth:** `ADMIN` | `MENTOR`\n\n**Path variable:** `session_id` (must be ≥ 1)\n\n**Returns:** `\"Session deleted successfully with id 1\"`"
-          },
-          "response": []
+            "description": "Soft-cancel a PENDING session. Role: ADMIN | STUDENT."
+          }
+        },
+        {
+          "name": "Submit Review",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"review\": \"Excellent session! Very helpful.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "review"]
+            },
+            "description": "Session must be COMPLETED. Rating 1-5. Role: ADMIN | STUDENT."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions  Lifecycle (Mentor/Admin)",
+      "item": [
+        {
+          "name": "Approve Session + Set Meeting Link",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meetingLink\": \"https://meet.google.com/abc-defg-hij\",\n  \"meetingPassword\": \"optional-password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "approve"]
+            },
+            "description": "Approve a pending payment and attach a meeting link. Status -> SCHEDULED. Role: ADMIN | MENTOR."
+          }
+        },
+        {
+          "name": "Reject Session",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Payment receipt is invalid or unclear.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "reject"]
+            },
+            "description": "Reject a pending payment with a reason. Status -> CANCELED. Role: ADMIN | MENTOR."
+          }
+        },
+        {
+          "name": "Start Session",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/start",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "start"]
+            },
+            "description": "Mark session as STARTED. Status must be SCHEDULED. Role: ADMIN | MENTOR."
+          }
+        },
+        {
+          "name": "Complete Session",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionNotes\": \"Great session! Student covered all topics.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "complete"]
+            },
+            "description": "Mark session as COMPLETED. Body is optional. Status must be STARTED. Role: ADMIN | MENTOR."
+          }
+        },
+        {
+          "name": "Delete Review (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "review"]
+            },
+            "description": "Remove a review from any session. Role: ADMIN only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions  Group",
+      "item": [
+        {
+          "name": "Get Open Group Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/open",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "open"]
+            },
+            "description": "List GROUP sessions with available seats. Role: ADMIN | STUDENT."
+          }
+        },
+        {
+          "name": "Join Group Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/join",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "join"]
+            },
+            "description": "Student joins an open GROUP session. Role: ADMIN | STUDENT."
+          }
+        },
+        {
+          "name": "Leave Group Session",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/leave",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "leave"]
+            },
+            "description": "Student leaves a PENDING group session. Role: ADMIN | STUDENT."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Admin Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "stats"]
+            },
+            "description": "Aggregated dashboard statistics (users, mentors, students, subjects, sessions by status). Role: ADMIN."
+          }
         }
       ]
     }

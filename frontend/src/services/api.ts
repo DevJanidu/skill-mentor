@@ -3,7 +3,9 @@
 // ---------------------------------------------------------------------------
 import api from "@/lib/api";
 import type {
+  ApproveSessionDTO,
   BookSessionDTO,
+  CompleteSessionDTO,
   CreateMentorDTO,
   CreateSessionDTO,
   CreateStudentDTO,
@@ -13,11 +15,15 @@ import type {
   OnboardingRequest,
   OnboardingResponse,
   OnboardingStatus,
+  RejectSessionDTO,
+  ReviewSessionDTO,
   SessionDTO,
   StudentDTO,
   SubjectDTO,
+  SubmitReceiptDTO,
   UpdateMentorDTO,
   UpdateSessionDTO,
+  UpdateSessionResourcesDTO,
   UpdateStudentDTO,
   UpdateSubjectDTO,
   UserDTO,
@@ -62,6 +68,20 @@ export const mentorsApi = {
     api.put<MentorDTO>(`/api/mentors/${id}`, data).then((r) => r.data),
   delete: (id: number) =>
     api.delete<string>(`/api/mentors/${id}`).then((r) => r.data),
+  /** Upload a profile image (multipart) — returns updated MentorDTO */
+  uploadProfileImage: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api
+      .post<import("@/types").MentorDTO>(
+        `/api/mentors/${id}/profile-image`,
+        form,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      )
+      .then((r) => r.data);
+  },
 };
 
 /* ── Students ──────────────────────────────────────────────────────────── */
@@ -92,6 +112,16 @@ export const subjectsApi = {
     api.put<SubjectDTO>(`/api/subjects/${id}`, data).then((r) => r.data),
   delete: (id: number) =>
     api.delete<string>(`/api/subjects/${id}`).then((r) => r.data),
+  /** Upload a thumbnail image (multipart) — returns updated SubjectDTO */
+  uploadThumbnail: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api
+      .post<SubjectDTO>(`/api/subjects/${id}/thumbnail`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
 };
 
 /* ── Sessions ──────────────────────────────────────────────────────────── */
@@ -117,4 +147,50 @@ export const sessionsApi = {
     api.put<SessionDTO>(`/api/sessions/${id}`, data).then((r) => r.data),
   delete: (id: number) =>
     api.delete<string>(`/api/sessions/${id}`).then((r) => r.data),
+
+  /* ── Receipt & approval ──────────────────────────────────────────── */
+  submitReceipt: (id: number, data: SubmitReceiptDTO) =>
+    api
+      .patch<SessionDTO>(`/api/sessions/${id}/submit-receipt`, data)
+      .then((r) => r.data),
+  approve: (id: number, data: ApproveSessionDTO) =>
+    api
+      .patch<SessionDTO>(`/api/sessions/${id}/approve`, data)
+      .then((r) => r.data),
+  reject: (id: number, data: RejectSessionDTO) =>
+    api
+      .patch<SessionDTO>(`/api/sessions/${id}/reject`, data)
+      .then((r) => r.data),
+
+  /* ── Lifecycle ───────────────────────────────────────────────────── */
+  start: (id: number) =>
+    api.patch<SessionDTO>(`/api/sessions/${id}/start`).then((r) => r.data),
+  complete: (id: number, data?: CompleteSessionDTO) =>
+    api
+      .patch<SessionDTO>(`/api/sessions/${id}/complete`, data ?? {})
+      .then((r) => r.data),
+  cancel: (id: number) =>
+    api.delete<SessionDTO>(`/api/sessions/${id}/cancel`).then((r) => r.data),
+
+  /* ── Group sessions ──────────────────────────────────────────────── */
+  getOpen: () =>
+    api.get<SessionDTO[]>("/api/sessions/open").then((r) => r.data),
+  join: (id: number) =>
+    api.post<SessionDTO>(`/api/sessions/${id}/join`).then((r) => r.data),
+  leave: (id: number) =>
+    api.delete<SessionDTO>(`/api/sessions/${id}/leave`).then((r) => r.data),
+
+  /* ── Reviews ─────────────────────────────────────────────────────── */
+  submitReview: (id: number, data: ReviewSessionDTO) =>
+    api
+      .post<SessionDTO>(`/api/sessions/${id}/review`, data)
+      .then((r) => r.data),
+  deleteReview: (id: number) =>
+    api.delete<SessionDTO>(`/api/sessions/${id}/review`).then((r) => r.data),
+
+  /* ── Post-session resources (mentor) ─────────────────────────────── */
+  updateResources: (id: number, data: UpdateSessionResourcesDTO) =>
+    api
+      .patch<SessionDTO>(`/api/sessions/${id}/resources`, data)
+      .then((r) => r.data),
 };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUpdateSession } from "@/hooks/use-queries";
+import { useSubmitReview } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,22 +20,17 @@ interface ReviewDialogProps {
 }
 
 export default function ReviewDialog({ session, onClose }: ReviewDialogProps) {
-  const updateSession = useUpdateSession();
+  const submitReview = useSubmitReview();
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [hovered, setHovered] = useState(0);
 
   const handleSubmit = () => {
     if (!session) return;
-    updateSession.mutate(
+    submitReview.mutate(
       {
         id: session.id,
-        data: {
-          sessionStatus: session.sessionStatus,
-          sessionType: session.sessionType,
-          studentRating: rating,
-          studentReview: review,
-        },
+        data: { rating, review },
       },
       {
         onSuccess: () => {
@@ -109,9 +104,9 @@ export default function ReviewDialog({ session, onClose }: ReviewDialogProps) {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!review || updateSession.isPending}
+            disabled={!review || submitReview.isPending}
           >
-            {updateSession.isPending ? "Submitting…" : "Submit Review"}
+            {submitReview.isPending ? "Submitting…" : "Submit Review"}
           </Button>
         </DialogFooter>
       </DialogContent>

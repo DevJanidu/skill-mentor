@@ -125,11 +125,18 @@
         </dependency>
 
 
-        <!-- Add Clerk Backend SDK (for admin operations) -->
+        <!-- OkHttp (used by ClerkService for Clerk admin API calls) -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
+        </dependency>
+
+        <!-- Cloudinary Java SDK -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>2.3.0</version>
         </dependency>
 
 

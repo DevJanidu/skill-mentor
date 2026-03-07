@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useSubject, useMentor, useSubjects } from "@/hooks/use-queries";
 import { useUser } from "@clerk/clerk-react";
+import { useSubject, useMentor, useSubjects } from "@/hooks/use-queries";
+import { getRoles } from "@/lib/roles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,14 +24,22 @@ import { useState, useMemo } from "react";
 
 export default function SubjectDetailPage() {
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { isSignedIn } = useUser();
   const navigate = useNavigate();
+  const { user, isSignedIn } = useUser();
   const id = Number(subjectId);
 
   const { data: subject, isLoading: sl } = useSubject(id);
   const { data: mentor, isLoading: ml } = useMentor(subject?.mentorId ?? 0);
   const { data: allSubjects } = useSubjects();
   const [bookingOpen, setBookingOpen] = useState(false);
+
+  // Derive role directly from Clerk publicMetadata — always available,
+  // no extra API call needed. Same pattern used in OnboardingGuard.
+  const roles = getRoles(
+    user?.publicMetadata as Record<string, unknown> | undefined,
+  );
+  const isStudent = isSignedIn === true && roles.includes("STUDENT");
+  const isMentorRole = isSignedIn === true && roles.includes("MENTOR");
 
   // Other subjects by this mentor
   const mentorSubjects = useMemo(
@@ -43,6 +52,11 @@ export default function SubjectDetailPage() {
 
   const handleBookClick = () => {
     if (!isSignedIn) {
+      navigate("/sign-in");
+      return;
+    }
+    if (!isStudent) {
+      // Signed in but not a student (no role yet or mentor) — send to onboarding
       navigate("/onboarding/role");
       return;
     }
@@ -112,24 +126,31 @@ export default function SubjectDetailPage() {
                     </Link>
                   </p>
                 </div>
-                {subject.description && (
-                  <p className="text-zinc-600 leading-relaxed text-base">
-                    {subject.description}
-                  </p>
-                )}
+
                 <div className="pt-2">
-                  <Button
-                    size="lg"
-                    className="bg-zinc-900 hover:bg-zinc-700 text-white gap-2"
-                    onClick={handleBookClick}
-                  >
-                    <CalendarPlus className="h-5 w-5" />
-                    Book a Session
-                  </Button>
-                  {!isSignedIn && (
-                    <p className="text-xs text-zinc-400 mt-2">
-                      Sign in to book a session
-                    </p>
+                  {/* Mentors viewing another mentor's subject should not see a booking CTA */}
+                  {!isMentorRole && (
+                    <>
+                      <Button
+                        size="lg"
+                        className="bg-zinc-900 hover:bg-zinc-700 text-white gap-2"
+                        onClick={handleBookClick}
+                      >
+                        <CalendarPlus className="h-5 w-5" />
+                        {isStudent
+                          ? "Book a Session"
+                          : isSignedIn
+                            ? "Complete Setup to Book"
+                            : "Sign in to Book"}
+                      </Button>
+                      {!isStudent && (
+                        <p className="text-xs text-zinc-400 mt-2">
+                          {isSignedIn
+                            ? "Complete your student profile to book sessions"
+                            : "A student account is required to book sessions"}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -285,7 +306,9 @@ export default function SubjectDetailPage() {
                   onClick={handleBookClick}
                 >
                   <CalendarPlus className="h-4 w-4" />
-                  Book a Session for this Subject
+                  {isStudent
+                    ? "Book a Session for this Subject"
+                    : "Sign in to Book"}
                 </Button>
               </CardContent>
             </Card>
@@ -339,10 +362,7 @@ export default function SubjectDetailPage() {
       {mentor && (
         <BookingDialog
           open={bookingOpen}
-          onOpenChange={(o) => {
-            setBookingOpen(o);
-            if (!o && isSignedIn) navigate("/dashboard");
-          }}
+          onOpenChange={setBookingOpen}
           mentorId={mentor.id}
           mentorName={mentor.fullName}
           subjects={allSubjects?.filter((s) => s.mentorId === mentor.id) ?? []}

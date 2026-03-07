@@ -15,6 +15,9 @@ import com.skillmentor.service.MentorService;
 import com.skillmentor.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,10 +38,11 @@ public class MentorServiceImpl implements MentorService {
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
 
+    @Cacheable("publicMentorList")
     @Override
     @Transactional(readOnly = true)
     public List<MentorDTO> getAllMentors() {
-        log.debug("Fetching all mentors");
+        log.debug("Fetching all mentors [cache miss]");
 
         List<Mentor> mentors = mentorRepository.findAll();
         return mentors.stream()
@@ -67,10 +71,11 @@ public class MentorServiceImpl implements MentorService {
                 .build();
     }
 
+    @Cacheable(value = "mentorProfile", key = "#id")
     @Override
     @Transactional(readOnly = true)
     public MentorDTO getMentorById(Long id) {
-        log.debug("Fetching mentor with id {}", id);
+        log.debug("Fetching mentor with id {} [cache miss]", id);
 
         Mentor mentor = mentorRepository.findById(id)
                 .orElseThrow(() -> new SkillMentorException(
@@ -81,6 +86,7 @@ public class MentorServiceImpl implements MentorService {
         return MentorMapper.toDto(mentor);
     }
 
+    @CacheEvict(value = "publicMentorList", allEntries = true)
     @Override
     @Transactional
     public MentorDTO createMentor(CreateMentorDTO dto, String clerkId) {
@@ -120,6 +126,10 @@ public class MentorServiceImpl implements MentorService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "mentorProfile", key = "#id"),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public MentorDTO updateMentor(Long id, UpdateMentorDTO dto) {
@@ -148,6 +158,10 @@ public class MentorServiceImpl implements MentorService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "mentorProfile", key = "#id"),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public void deleteMentor(Long id) {
@@ -179,6 +193,10 @@ public class MentorServiceImpl implements MentorService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "mentorProfile", key = "#mentorId"),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public MentorDTO uploadProfileImage(Long mentorId, MultipartFile file) {
@@ -192,6 +210,27 @@ public class MentorServiceImpl implements MentorService {
         mentor.getUser().setProfileImageUrl(secureUrl);
 
         log.info("Profile image uploaded for mentor {} → {}", mentorId, secureUrl);
+        return MentorMapper.toDto(mentor);
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "mentorProfile", key = "#mentorId"),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
+    @Override
+    @Transactional
+    public MentorDTO uploadCoverImage(Long mentorId, MultipartFile file) {
+        log.debug("Uploading cover image for mentor {}", mentorId);
+
+        Mentor mentor = mentorRepository.findById(mentorId)
+                .orElseThrow(() -> new SkillMentorException(
+                        "Mentor not found with id " + mentorId, HttpStatus.NOT_FOUND));
+
+        String secureUrl = cloudinaryService.uploadUnsigned(file, "mentors/covers");
+        mentor.setCoverImageUrl(secureUrl);
+        mentorRepository.save(mentor);
+
+        log.info("Cover image uploaded for mentor {} → {}", mentorId, secureUrl);
         return MentorMapper.toDto(mentor);
     }
 }

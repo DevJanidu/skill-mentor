@@ -7,6 +7,7 @@ import com.skillmentor.repository.*;
 import com.skillmentor.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +26,11 @@ public class AdminServiceImpl implements AdminService {
     private final SubjectRepository subjectRepository;
     private final SessionRepository sessionRepository;
 
+    @Cacheable("dashboardStats")
     @Override
     @Transactional(readOnly = true)
     public AdminStatsDTO getStats() {
-        log.debug("Fetching admin dashboard stats");
+        log.debug("Fetching admin dashboard stats [cache miss]");
 
         long pending   = sessionRepository.countBySessionStatus(SessionStatus.PENDING);
         long scheduled = sessionRepository.countBySessionStatus(SessionStatus.SCHEDULED);

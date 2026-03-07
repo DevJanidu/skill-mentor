@@ -45,6 +45,9 @@ public class Mentor {
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "cover_image_url")
+    private String coverImageUrl;
+
     @OneToMany(mappedBy = "mentor", cascade = CascadeType.ALL)
     private List<Subject> subjects;
 

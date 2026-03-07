@@ -25,6 +25,7 @@ public class MentorDTO {
     private int experienceYears;
     private String bio;
     private String profileImageUrl;
+    private String coverImageUrl;
     private Double averageRating;
     private Integer totalReviews;
 

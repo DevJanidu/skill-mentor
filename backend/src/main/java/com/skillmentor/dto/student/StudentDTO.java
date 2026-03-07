@@ -25,5 +25,7 @@ public class StudentDTO {
 
     private String studentCode;
     private String learningGoals;
+    private String profileImageUrl;
+    private String coverImageUrl;
 
 }

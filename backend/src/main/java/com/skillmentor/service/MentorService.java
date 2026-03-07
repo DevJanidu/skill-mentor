@@ -17,4 +17,5 @@ public interface MentorService {
     MentorDTO updateMentor(Long id, UpdateMentorDTO dto);
     void deleteMentor(Long id);
     MentorDTO uploadProfileImage(Long mentorId, MultipartFile file);
+    MentorDTO uploadCoverImage(Long mentorId, MultipartFile file);
 }

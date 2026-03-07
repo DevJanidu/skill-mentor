@@ -37,6 +37,7 @@ public class MentorMapper {
                 .experienceYears(savedMentor.getExperienceYears())
                 .bio(savedMentor.getBio())
                 .profileImageUrl(savedMentor.getUser().getProfileImageUrl())
+                .coverImageUrl(savedMentor.getCoverImageUrl())
                 .averageRating(savedMentor.getAverageRating())
                 .totalReviews(savedMentor.getTotalReviews())
                 .createdAt(savedMentor.getCreatedAt())

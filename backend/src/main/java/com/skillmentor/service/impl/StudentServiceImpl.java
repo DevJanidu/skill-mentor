@@ -9,15 +9,16 @@ import com.skillmentor.entity.UserRole;
 import com.skillmentor.exception.SkillMentorException;
 import com.skillmentor.mapper.StudentMapper;
 import com.skillmentor.repository.StudentRepository;
+import com.skillmentor.service.CloudinaryService;
 import com.skillmentor.service.StudentService;
 import com.skillmentor.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final UserService userService;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -136,5 +138,38 @@ public class StudentServiceImpl implements StudentService {
             throw new SkillMentorException("failed to delete the student"
                     ,HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    @Transactional
+    public StudentDTO uploadProfileImage(Long studentId, MultipartFile file) {
+        log.debug("Uploading profile image for student {}", studentId);
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new SkillMentorException(
+                        "Student not found with id " + studentId, HttpStatus.NOT_FOUND));
+
+        String secureUrl = cloudinaryService.uploadUnsigned(file, "students");
+        student.getUser().setProfileImageUrl(secureUrl);
+
+        log.info("Profile image uploaded for student {} \u2192 {}", studentId, secureUrl);
+        return StudentMapper.toDTO(student);
+    }
+
+    @Override
+    @Transactional
+    public StudentDTO uploadCoverImage(Long studentId, MultipartFile file) {
+        log.debug("Uploading cover image for student {}", studentId);
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new SkillMentorException(
+                        "Student not found with id " + studentId, HttpStatus.NOT_FOUND));
+
+        String secureUrl = cloudinaryService.uploadUnsigned(file, "students/covers");
+        student.setCoverImageUrl(secureUrl);
+        studentRepository.save(student);
+
+        log.info("Cover image uploaded for student {} \u2192 {}", studentId, secureUrl);
+        return StudentMapper.toDTO(student);
     }
 }

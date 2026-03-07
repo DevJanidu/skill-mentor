@@ -19,6 +19,8 @@ public class StudentMapper {
                 .email(student.getUser().getEmail())
                 .studentCode(student.getStudentCode())
                 .learningGoals(student.getLearningGoals())
+                .profileImageUrl(student.getUser().getProfileImageUrl())
+                .coverImageUrl(student.getCoverImageUrl())
                 .build();
     }
 

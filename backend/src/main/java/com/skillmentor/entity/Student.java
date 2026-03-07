@@ -31,6 +31,9 @@ public class Student {
     @Column(columnDefinition = "TEXT")
     private String learningGoals;
 
+    @Column(name = "cover_image_url")
+    private String coverImageUrl;
+
     @ManyToMany(mappedBy = "students")
     private List<Session> sessions;
 

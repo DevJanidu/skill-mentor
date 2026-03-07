@@ -12,12 +12,14 @@ import com.skillmentor.service.StudentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -78,6 +80,32 @@ public class StudentController extends AbstractController {
     public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return sendOkResponse(String.format("Student deleted with id (%s)", id));
+    }
+
+    /**
+     * POST /api/students/{id}/profile-image
+     * Upload or replace the profile image for a student.
+     */
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PostMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<StudentDTO> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return sendOkResponse(studentService.uploadProfileImage(id, file));
+    }
+
+    /**
+     * POST /api/students/{id}/cover-image
+     * Upload or replace the cover/banner image for a student.
+     */
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PostMapping(value = "/{id}/cover-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<StudentDTO> uploadCoverImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return sendOkResponse(studentService.uploadCoverImage(id, file));
     }
 
 }

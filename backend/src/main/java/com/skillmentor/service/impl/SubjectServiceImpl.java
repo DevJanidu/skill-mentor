@@ -14,6 +14,9 @@ import com.skillmentor.service.CloudinaryService;
 import com.skillmentor.service.SubjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,10 +35,11 @@ public class SubjectServiceImpl implements SubjectService {
     private final MentorRepository mentorRepository;
     private final CloudinaryService cloudinaryService;
 
+    @Cacheable("subjects")
     @Override
     @Transactional(readOnly = true)
     public List<SubjectDTO> getAllSubjects() {
-        log.debug("Fetching all subjects");
+        log.debug("Fetching all subjects [cache miss]");
 
         return subjectRepository.findAll()
                 .stream()
@@ -64,10 +68,11 @@ public class SubjectServiceImpl implements SubjectService {
                 .build();
     }
 
+    @Cacheable(value = "subjects", key = "'id::' + #subjectId")
     @Override
     @Transactional(readOnly = true)
     public SubjectDTO getSubjectById(long subjectId) {
-        log.debug("Fetching subject with id {}", subjectId);
+        log.debug("Fetching subject with id {} [cache miss]", subjectId);
 
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new SkillMentorException(
@@ -78,6 +83,11 @@ public class SubjectServiceImpl implements SubjectService {
         return SubjectMapper.toDTO(subject);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "subjects", allEntries = true),
+            @CacheEvict(value = "mentorProfile", key = "#mentorId"),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public SubjectDTO createSubject(Long mentorId, CreateSubjectDTO dto) {
@@ -107,6 +117,11 @@ public class SubjectServiceImpl implements SubjectService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "subjects", allEntries = true),
+            @CacheEvict(value = "mentorProfile", allEntries = true),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public SubjectDTO updateSubject(Long subjectId, UpdateSubjectDTO dto) {
@@ -135,6 +150,11 @@ public class SubjectServiceImpl implements SubjectService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "subjects", allEntries = true),
+            @CacheEvict(value = "mentorProfile", allEntries = true),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public void deleteSubject(Long subjectId) {
@@ -151,6 +171,11 @@ public class SubjectServiceImpl implements SubjectService {
         log.info("subject Deleted successfully");
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "subjects", allEntries = true),
+            @CacheEvict(value = "mentorProfile", allEntries = true),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Override
     @Transactional
     public SubjectDTO uploadThumbnail(Long subjectId, MultipartFile file) {

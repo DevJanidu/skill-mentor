@@ -15,6 +15,9 @@ import com.skillmentor.service.SessionService;
 import com.skillmentor.utils.SessionAvailabilityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,10 +53,11 @@ public class SessionServiceImpl implements SessionService {
                 .toList();
     }
 
+    @Cacheable(value = "sessionDetails", key = "#id")
     @Override
     @Transactional(readOnly = true)
     public SessionDTO getSessionById(Long id) {
-        log.debug("Fetching session with id {}", id);
+        log.debug("Fetching session with id {} [cache miss]", id);
 
         Session session = sessionRepository.findById(id)
                 .orElseThrow(() -> new SkillMentorException(
@@ -68,6 +72,10 @@ public class SessionServiceImpl implements SessionService {
     //  CREATE SESSION
 
 
+    @Caching(evict = {
+            @CacheEvict(value = "mentorSessions", key = "#dto.mentorId"),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Override
     @Transactional
     public SessionDTO createSession(CreateSessionDTO dto) {
@@ -187,6 +195,11 @@ public class SessionServiceImpl implements SessionService {
       // UPDATE SESSION
 
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#id"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Override
     @Transactional
     public SessionDTO updateSessionDto(Long id, UpdateSessionDTO dto) {
@@ -299,6 +312,11 @@ public class SessionServiceImpl implements SessionService {
        // DELETE SESSION
 
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#id"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Override
     @Transactional
     public void deleteSession(Long id) {
@@ -326,6 +344,7 @@ public class SessionServiceImpl implements SessionService {
                 .toList();
     }
 
+    @Cacheable(value = "mentorSessions", key = "#mentorId")
     @Override
     @Transactional(readOnly = true)
     public List<SessionDTO> getSessionsByMentor(Long mentorId) {
@@ -339,6 +358,10 @@ public class SessionServiceImpl implements SessionService {
     //  STUDENT SELF-BOOKING
 
 
+    @Caching(evict = {
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO bookSession(BookSessionDTO dto, String callerClerkId) {
@@ -424,6 +447,10 @@ public class SessionServiceImpl implements SessionService {
     //  P0: SUBMIT RECEIPT (STUDENT)
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO submitReceipt(Long sessionId, SubmitReceiptDTO dto, String callerClerkId) {
@@ -466,6 +493,11 @@ public class SessionServiceImpl implements SessionService {
     //  P0: APPROVE SESSION (MENTOR / ADMIN)
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO approveSession(Long sessionId, ApproveSessionDTO dto, String callerClerkId) {
@@ -500,6 +532,10 @@ public class SessionServiceImpl implements SessionService {
     //  P0: REJECT SESSION (MENTOR / ADMIN)
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO rejectSession(Long sessionId, RejectSessionDTO dto, String callerClerkId) {
@@ -532,6 +568,11 @@ public class SessionServiceImpl implements SessionService {
     //  P1: START SESSION
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO startSession(Long sessionId, String callerClerkId) {
@@ -560,6 +601,11 @@ public class SessionServiceImpl implements SessionService {
     //  P1: COMPLETE SESSION
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO completeSession(Long sessionId, CompleteSessionDTO dto, String callerClerkId) {
@@ -592,6 +638,11 @@ public class SessionServiceImpl implements SessionService {
     //  P1: CANCEL SESSION (STUDENT)
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "dashboardStats", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO cancelSession(Long sessionId, String callerClerkId) {
@@ -670,6 +721,10 @@ public class SessionServiceImpl implements SessionService {
     //  P1: JOIN GROUP SESSION
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO joinSession(Long sessionId, String callerClerkId) {
@@ -724,6 +779,10 @@ public class SessionServiceImpl implements SessionService {
     //  P1: LEAVE GROUP SESSION
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO leaveSession(Long sessionId, String callerClerkId) {
@@ -760,6 +819,13 @@ public class SessionServiceImpl implements SessionService {
     //  P2: SUBMIT REVIEW
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "mentorReviews", allEntries = true),
+            @CacheEvict(value = "mentorProfile", allEntries = true),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO submitReview(Long sessionId, ReviewSessionDTO dto, String callerClerkId) {
@@ -804,6 +870,13 @@ public class SessionServiceImpl implements SessionService {
     //  P2: DELETE REVIEW (ADMIN)
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true),
+            @CacheEvict(value = "mentorReviews", allEntries = true),
+            @CacheEvict(value = "mentorProfile", allEntries = true),
+            @CacheEvict(value = "publicMentorList", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO deleteReview(Long sessionId) {
@@ -829,6 +902,10 @@ public class SessionServiceImpl implements SessionService {
     //  P3: UPDATE POST-SESSION RESOURCES (MENTOR)
     // ═════════════════════════════════════════════════════════════════════
 
+    @Caching(evict = {
+            @CacheEvict(value = "sessionDetails", key = "#sessionId"),
+            @CacheEvict(value = "mentorSessions", allEntries = true)
+    })
     @Transactional
     @Override
     public SessionDTO updateSessionResources(Long sessionId, UpdateSessionResourcesDTO dto, String callerClerkId) {

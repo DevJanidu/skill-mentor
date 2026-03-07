@@ -51,7 +51,14 @@ public class UserServiceImpl implements UserService {
                     existingUser.setFirstName(firstName);
                     existingUser.setLastName(lastName);
                     existingUser.setFullName(fullName);
-                    existingUser.setProfileImageUrl(imageUrl);
+
+                    // Only update profileImageUrl from Clerk if the user hasn't set
+                    // a custom image via in-app upload (Cloudinary URL)
+                    boolean hasCustomUpload = existingUser.getProfileImageUrl() != null
+                            && existingUser.getProfileImageUrl().contains("res.cloudinary.com");
+                    if (!hasCustomUpload) {
+                        existingUser.setProfileImageUrl(imageUrl);
+                    }
 
                     // CRITICAL FIX: Clear and add all (instead of setRoles)
                     if (existingUser.getRoles() == null) {

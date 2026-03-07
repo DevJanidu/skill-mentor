@@ -102,4 +102,17 @@ public class MentorController extends AbstractController {
     ) {
         return sendOkResponse(mentorService.uploadProfileImage(id, file));
     }
+
+    /**
+     * POST /api/mentors/{id}/cover-image
+     * Upload or replace the cover/banner image for a mentor.
+     */
+    @PreAuthorize("hasAnyRole('ADMIN','MENTOR')")
+    @PostMapping(value = "/{id}/cover-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MentorDTO> uploadCoverImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return sendOkResponse(mentorService.uploadCoverImage(id, file));
+    }
 }

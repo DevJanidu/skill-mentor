@@ -10,7 +10,11 @@ import { GraduationCapIcon, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../ui/button";
-import { isAdmin } from "@/lib/roles";
+import {
+  isAdmin,
+  isMentor as checkIsMentor,
+  hasCompletedOnboarding,
+} from "@/lib/roles";
 
 function Navbar() {
   const { user, isSignedIn } = useUser();
@@ -19,6 +23,12 @@ function Navbar() {
 
   const admin =
     isSignedIn && isAdmin(user?.publicMetadata as Record<string, unknown>);
+  const isMentor =
+    isSignedIn &&
+    checkIsMentor(user?.publicMetadata as Record<string, unknown>);
+  const onboarded =
+    isSignedIn &&
+    hasCompletedOnboarding(user?.publicMetadata as Record<string, unknown>);
 
   return (
     <div className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
@@ -42,8 +52,11 @@ function Navbar() {
           <Link to="/subjects" className="hover:text-zinc-900 transition">
             Subjects
           </Link>
-          {isSignedIn && (
-            <Link to="/dashboard" className="hover:text-zinc-900 transition">
+          {onboarded && (
+            <Link
+              to={isMentor ? "/mentor/dashboard" : "/dashboard"}
+              className="hover:text-zinc-900 transition"
+            >
               Dashboard
             </Link>
           )}
@@ -120,9 +133,9 @@ function Navbar() {
             >
               Subjects
             </Link>
-            {isSignedIn && (
+            {onboarded && (
               <Link
-                to="/dashboard"
+                to={isMentor ? "/mentor/dashboard" : "/dashboard"}
                 onClick={toggleMobileMenu}
                 className="block w-full text-left py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 transition"
               >

@@ -3,9 +3,12 @@ import {
   BookOpen,
   CalendarCheck,
   GraduationCap,
+  Inbox,
   LayoutDashboard,
   Menu,
-  Users,
+  Plus,
+  Star,
+  UserCircle,
 } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -15,19 +18,46 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard, end: true },
   {
-    label: "Bookings",
-    href: "/admin/bookings",
+    label: "Overview",
+    href: "/mentor/dashboard",
+    icon: LayoutDashboard,
+    end: true,
+  },
+  {
+    label: "Booking Inbox",
+    href: "/mentor/inbox",
+    icon: Inbox,
+    end: false,
+  },
+  {
+    label: "My Sessions",
+    href: "/mentor/sessions",
     icon: CalendarCheck,
     end: false,
   },
-  { label: "Subjects", href: "/admin/subjects", icon: BookOpen, end: false },
-  { label: "Mentors", href: "/admin/mentors", icon: Users, end: false },
   {
-    label: "Students",
-    href: "/admin/students",
-    icon: GraduationCap,
+    label: "My Subjects",
+    href: "/mentor/subjects",
+    icon: BookOpen,
+    end: false,
+  },
+  {
+    label: "Create Session",
+    href: "/mentor/create-session",
+    icon: Plus,
+    end: false,
+  },
+  {
+    label: "Reviews",
+    href: "/mentor/reviews",
+    icon: Star,
+    end: false,
+  },
+  {
+    label: "Profile",
+    href: "/mentor/profile",
+    icon: UserCircle,
     end: false,
   },
 ] as const;
@@ -88,12 +118,11 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   );
 }
 
-export default function AdminLayout() {
+export default function MentorLayout() {
   const { user } = useUser();
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Breadcrumb from path
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const breadcrumb = pathSegments.map(
     (s) => s.charAt(0).toUpperCase() + s.slice(1),
@@ -102,7 +131,7 @@ export default function AdminLayout() {
   return (
     <div className="flex h-screen bg-zinc-50">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 flex-shrink-0 border-r bg-white lg:block">
+      <aside className="hidden w-64 shrink-0 border-r bg-white lg:block">
         <SidebarContent />
       </aside>
 
@@ -144,7 +173,7 @@ export default function AdminLayout() {
 
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-zinc-600 sm:block">
-              {user?.firstName ?? "Admin"}
+              {user?.firstName ?? "Mentor"}
             </span>
             <UserButton afterSignOutUrl="/" />
           </div>

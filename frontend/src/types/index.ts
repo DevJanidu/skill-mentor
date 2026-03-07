@@ -12,6 +12,7 @@ export type SessionStatus =
   | "COMPLETED"
   | "CANCELED";
 export type SessionType = "INDIVIDUAL" | "GROUP";
+export type ReceiptStatus = "NONE" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
 /* ── User / Onboarding ─────────────────────────────────────────────────── */
 
@@ -72,6 +73,8 @@ export interface MentorDTO {
   experienceYears: number;
   bio: string | null;
   profileImageUrl: string | null;
+  averageRating: number;
+  totalReviews: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -115,8 +118,12 @@ export interface SubjectDTO {
   id: number;
   subjectName: string;
   description: string | null;
+  thumbnailUrl: string | null;
+  category: string | null;
   mentorId: number;
   mentorName: string;
+  averageRating: number;
+  totalReviews: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -140,16 +147,29 @@ export interface SessionDTO {
   mentorName: string;
   subjectId: number;
   subjectName: string;
+  /** Primary student (INDIVIDUAL) — populated by backend from enrolled students list */
+  studentId: number | null;
+  studentName: string | null;
+  /** All enrolled student names — useful for GROUP sessions */
+  studentNames: string[];
   sessionAt: string;
   durationMinutes: number;
   maxParticipants: number;
+  currentParticipants: number;
   sessionType: SessionType;
   sessionStatus: SessionStatus;
+  receiptStatus: ReceiptStatus;
   meetingLink: string | null;
+  meetingPassword: string | null;
   sessionNotes: string | null;
   studentReview: string | null;
   studentRating: number | null;
   receiptUrl: string | null;
+  rejectionReason: string | null;
+  /** Post-session resources added by mentor */
+  recordingLink: string | null;
+  resourceLink: string | null;
+  assessmentLink: string | null;
 }
 
 export interface CreateSessionDTO {
@@ -182,4 +202,40 @@ export interface BookSessionDTO {
   sessionAt: string;
   durationMinutes: number;
   sessionType?: SessionType;
+  /** For GROUP sessions only — max number of participants (2–20) */
+  maxParticipants?: number;
+}
+
+/* ── New action DTOs ───────────────────────────────────────────────────── */
+
+export interface SubmitReceiptDTO {
+  receiptUrl: string;
+}
+
+export interface ApproveSessionDTO {
+  meetingLink: string;
+  meetingPassword?: string;
+}
+
+export interface RejectSessionDTO {
+  reason: string;
+}
+
+export interface CompleteSessionDTO {
+  sessionNotes?: string;
+}
+
+/** Mentor updates session info — meeting link/password (SCHEDULED+) and post-session resources (STARTED+) */
+export interface UpdateSessionResourcesDTO {
+  meetingLink?: string;
+  meetingPassword?: string;
+  recordingLink?: string;
+  resourceLink?: string;
+  assessmentLink?: string;
+  sessionNotes?: string;
+}
+
+export interface ReviewSessionDTO {
+  rating: number;
+  review: string;
 }

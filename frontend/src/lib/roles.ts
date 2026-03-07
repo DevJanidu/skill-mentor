@@ -55,3 +55,15 @@ export function isStudent(
 ): boolean {
   return hasRole(publicMetadata, "STUDENT");
 }
+
+/**
+ * Returns true if the user has completed onboarding, meaning they have
+ * at least one of STUDENT, MENTOR, or ADMIN role.
+ * A user with only the default "USER" role has NOT completed onboarding.
+ */
+export function hasCompletedOnboarding(
+  publicMetadata: Record<string, unknown> | undefined,
+): boolean {
+  const roles = getRoles(publicMetadata);
+  return roles.some((r) => r === "STUDENT" || r === "MENTOR" || r === "ADMIN");
+}

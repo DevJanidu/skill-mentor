@@ -50,11 +50,31 @@ export interface ApiErrorBody {
   path?: string;
 }
 
+/**
+ * Returns a user-facing error string from an Axios error.
+ * Includes field-level validation messages when the backend returns them.
+ */
 export function extractErrorMessage(error: unknown): string {
   const axiosErr = error as AxiosError<ApiErrorBody>;
-  if (axiosErr.response?.data?.message) return axiosErr.response.data.message;
+  if (axiosErr.response?.data) {
+    const data = axiosErr.response.data;
+    if (data.errors && Object.keys(data.errors).length > 0) {
+      const fieldMessages = Object.values(data.errors).join("; ");
+      return data.message ? `${data.message}: ${fieldMessages}` : fieldMessages;
+    }
+    if (data.message) return data.message;
+  }
   if (axiosErr.message) return axiosErr.message;
   return "An unexpected error occurred";
+}
+
+/**
+ * Returns the field→message map from a validation error response,
+ * useful for setting per-field error state in forms.
+ */
+export function extractFieldErrors(error: unknown): Record<string, string> {
+  const axiosErr = error as AxiosError<ApiErrorBody>;
+  return axiosErr?.response?.data?.errors ?? {};
 }
 
 export default api;

@@ -2,6 +2,7 @@
 // TanStack Query hooks – centralised data fetching
 // ---------------------------------------------------------------------------
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-react";
 import {
   mentorsApi,
   studentsApi,
@@ -11,13 +12,19 @@ import {
   onboardingApi,
 } from "@/services/api";
 import type {
+  ApproveSessionDTO,
   BookSessionDTO,
+  CompleteSessionDTO,
   CreateMentorDTO,
   CreateSessionDTO,
   CreateStudentDTO,
   CreateSubjectDTO,
+  RejectSessionDTO,
+  ReviewSessionDTO,
+  SubmitReceiptDTO,
   UpdateMentorDTO,
   UpdateSessionDTO,
+  UpdateSessionResourcesDTO,
   UpdateStudentDTO,
   UpdateSubjectDTO,
   OnboardingRequest,
@@ -115,6 +122,34 @@ export const useDeleteMentor = () => {
   });
 };
 
+export const useUploadMentorProfileImage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      mentorsApi.uploadProfileImage(id, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["mentors"] });
+      toast.success("Profile image updated!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/**
+ * Resolves the current Clerk user's mentor profile from the mentors list.
+ * Returns { mentor, isLoading, notFound } so pages can react accordingly.
+ */
+export const useCurrentMentor = () => {
+  const { user } = useUser();
+  const { data: mentors, isLoading } = useMentors();
+  const mentor = mentors?.find((m) => m.clerkId === user?.id) ?? null;
+  return {
+    mentor,
+    isLoading,
+    notFound: !isLoading && mentors !== undefined && !mentor,
+  };
+};
+
 /* ── Students ──────────────────────────────────────────────────────────── */
 
 export const useStudents = () =>
@@ -171,6 +206,23 @@ export const useDeleteStudent = () => {
   });
 };
 
+/**
+ * Resolves the current Clerk user's student profile from the students list.
+ * Only works when the calling user has the STUDENT (or ADMIN) role — the
+ * GET /api/students endpoint rejects other roles.
+ * Returns { student, isLoading, notFound } so pages can react accordingly.
+ */
+export const useCurrentStudent = () => {
+  const { user } = useUser();
+  const { data: students, isLoading } = useStudents();
+  const student = students?.find((s) => s.clerkId === user?.id) ?? null;
+  return {
+    student,
+    isLoading,
+    notFound: !isLoading && students !== undefined && !student,
+  };
+};
+
 /* ── Subjects ──────────────────────────────────────────────────────────── */
 
 export const useSubjects = () =>
@@ -215,6 +267,19 @@ export const useDeleteSubject = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["subjects"] });
       toast.success("Subject deleted");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useUploadSubjectThumbnail = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      subjectsApi.uploadThumbnail(id, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["subjects"] });
+      toast.success("Thumbnail uploaded!");
     },
     onError: (e) => toast.error(extractErrorMessage(e)),
   });
@@ -295,6 +360,165 @@ export const useDeleteSession = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
       toast.success("Session deleted");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/* ── Receipt & approval ────────────────────────────────────────────────── */
+
+export const useSubmitReceipt = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: SubmitReceiptDTO }) =>
+      sessionsApi.submitReceipt(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useApproveSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: ApproveSessionDTO }) =>
+      sessionsApi.approve(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Session approved!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useRejectSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: RejectSessionDTO }) =>
+      sessionsApi.reject(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Session rejected");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/* ── Lifecycle ─────────────────────────────────────────────────────────── */
+
+export const useStartSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => sessionsApi.start(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Session started!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useCompleteSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data?: CompleteSessionDTO }) =>
+      sessionsApi.complete(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Session completed!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useCancelSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => sessionsApi.cancel(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Session cancelled");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/* ── Group sessions ────────────────────────────────────────────────────── */
+
+export const useOpenGroupSessions = () =>
+  useQuery({
+    queryKey: ["sessions", "open"],
+    queryFn: sessionsApi.getOpen,
+  });
+
+export const useJoinSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => sessionsApi.join(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Joined session!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useLeaveSession = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => sessionsApi.leave(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Left session");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/* ── Reviews ───────────────────────────────────────────────────────────── */
+
+export const useSubmitReview = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: ReviewSessionDTO }) =>
+      sessionsApi.submitReview(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Review submitted!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useDeleteReview = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => sessionsApi.deleteReview(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("Review deleted");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/* ── Post-session resources ────────────────────────────────────────────── */
+
+export const useUpdateSessionResources = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: UpdateSessionResourcesDTO;
+    }) => sessionsApi.updateResources(id, data),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      qc.invalidateQueries({ queryKey: ["sessions", id] });
+      toast.success("Resources saved!");
     },
     onError: (e) => toast.error(extractErrorMessage(e)),
   });

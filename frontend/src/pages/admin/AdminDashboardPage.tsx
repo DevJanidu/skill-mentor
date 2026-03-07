@@ -6,7 +6,7 @@ import {
 } from "@/hooks/use-queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, CalendarCheck, GraduationCap, Users } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AdminDashboardPage() {
   const { data: sessions, isLoading: sl } = useSessions();
@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <Skeleton className="h-8 w-20" />
+                <Spinner className="h-5 w-5 text-zinc-400" />
               ) : (
                 <p className="text-3xl font-bold text-zinc-900">{s.value}</p>
               )}
@@ -82,10 +82,8 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+            <div className="flex justify-center py-8">
+              <Spinner className="h-6 w-6 text-zinc-400" />
             </div>
           ) : sessions && sessions.length > 0 ? (
             <div className="overflow-x-auto">

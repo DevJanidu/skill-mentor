@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -222,10 +222,8 @@ export default function MentorInboxPage() {
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-20 w-full" />
-                    ))}
+                  <div className="flex justify-center py-8">
+                    <Spinner className="h-6 w-6 text-zinc-400" />
                   </div>
                 ) : filtered.length > 0 ? (
                   <div className="space-y-3">

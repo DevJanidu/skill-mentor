@@ -135,6 +135,19 @@ export const useUploadMentorProfileImage = () => {
   });
 };
 
+export const useUploadMentorCoverImage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      mentorsApi.uploadCoverImage(id, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["mentors"] });
+      toast.success("Cover image updated!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
 /**
  * Resolves the current Clerk user's mentor profile from the mentors list.
  * Returns { mentor, isLoading, notFound } so pages can react accordingly.
@@ -201,6 +214,32 @@ export const useDeleteStudent = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["students"] });
       toast.success("Student deleted");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useUploadStudentProfileImage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      studentsApi.uploadProfileImage(id, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["students"] });
+      toast.success("Profile image updated!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+export const useUploadStudentCoverImage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      studentsApi.uploadCoverImage(id, file),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["students"] });
+      toast.success("Cover image updated!");
     },
     onError: (e) => toast.error(extractErrorMessage(e)),
   });

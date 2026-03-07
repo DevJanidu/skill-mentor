@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -188,7 +188,7 @@ export default function MentorSubjectsPage() {
   };
 
   if (mentorLoading) {
-    return <div className="py-24 text-center text-zinc-500">Loading…</div>;
+    return <PageSpinner />;
   }
 
   if (notFound) {
@@ -223,10 +223,8 @@ export default function MentorSubjectsPage() {
 
         {/* Subject grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-60 w-full rounded-xl" />
-            ))}
+          <div className="flex justify-center py-16">
+            <Spinner className="h-8 w-8 text-zinc-400" />
           </div>
         ) : mySubjects.length === 0 ? (
           <Card>
@@ -254,7 +252,7 @@ export default function MentorSubjectsPage() {
               {pageSubjects.map((s) => (
                 <Card key={s.id} className="overflow-hidden flex flex-col">
                   {/* Thumbnail */}
-                  <div className="h-40 bg-zinc-100 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="h-44 bg-zinc-100 flex items-center justify-center overflow-hidden shrink-0">
                     {s.thumbnailUrl ? (
                       <img
                         src={s.thumbnailUrl}
@@ -340,14 +338,14 @@ export default function MentorSubjectsPage() {
 
       {/* ── Create dialog ─────────────────────────────────────────────── */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90vh]">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Add New Subject</DialogTitle>
             <DialogDescription>
               Add a subject that you teach. You can link it to sessions.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="cn">Subject name *</Label>
               <Input
@@ -362,14 +360,15 @@ export default function MentorSubjectsPage() {
               <Textarea
                 id="cd"
                 placeholder="What will students learn?"
-                rows={3}
+                rows={4}
+                className="resize-none"
                 value={createDesc}
                 onChange={(e) => setCreateDesc(e.target.value)}
               />
             </div>
             <ThumbnailPicker value={createThumb} onChange={setCreateThumb} />
           </div>
-          <DialogFooter className="mt-2">
+          <DialogFooter className="shrink-0 mt-2">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
@@ -392,11 +391,11 @@ export default function MentorSubjectsPage() {
         open={!!editSubject}
         onOpenChange={(o) => !o && setEditSubject(null)}
       >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90vh]">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Edit Subject</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="en">Subject name *</Label>
               <Input
@@ -409,7 +408,8 @@ export default function MentorSubjectsPage() {
               <Label htmlFor="ed">Description</Label>
               <Textarea
                 id="ed"
-                rows={3}
+                rows={4}
+                className="resize-none"
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
               />
@@ -420,7 +420,7 @@ export default function MentorSubjectsPage() {
               currentUrl={editSubject?.thumbnailUrl}
             />
           </div>
-          <DialogFooter className="mt-2">
+          <DialogFooter className="shrink-0 mt-2">
             <Button variant="outline" onClick={() => setEditSubject(null)}>
               Cancel
             </Button>

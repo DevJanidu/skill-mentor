@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import BookingDialog from "@/components/BookingDialog";
 import {
   ArrowLeft,
@@ -18,6 +18,8 @@ import {
   GraduationCap,
   Mail,
   Phone,
+  Star,
+  Tag,
   User,
 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -64,18 +66,7 @@ export default function SubjectDetailPage() {
   };
 
   if (sl) {
-    return (
-      <div className="py-16 bg-zinc-50 min-h-screen">
-        <div className="mx-auto max-w-4xl px-6 space-y-6">
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-64 w-full md:col-span-2" />
-          </div>
-        </div>
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (!subject) {
@@ -104,59 +95,85 @@ export default function SubjectDetailPage() {
           <ArrowLeft className="h-4 w-4" /> Back to subjects
         </Link>
 
-        {/* Subject header */}
-        <Card className="border-none shadow-md">
-          <CardContent className="p-8">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              <div className="rounded-2xl bg-zinc-900 p-4 self-start shrink-0">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
-              <div className="flex-1 space-y-3">
-                <div>
-                  <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">
-                    {subject.subjectName}
-                  </h1>
-                  <p className="text-zinc-500 text-sm mt-1">
-                    Taught by{" "}
-                    <Link
-                      to={`/mentors/${subject.mentorId}`}
-                      className="font-medium text-zinc-700 hover:text-zinc-900 underline-offset-2 hover:underline"
-                    >
-                      {subject.mentorName}
-                    </Link>
-                  </p>
-                </div>
-
-                <div className="pt-2">
-                  {/* Mentors viewing another mentor's subject should not see a booking CTA */}
-                  {!isMentorRole && (
-                    <>
-                      <Button
-                        size="lg"
-                        className="bg-zinc-900 hover:bg-zinc-700 text-white gap-2"
-                        onClick={handleBookClick}
-                      >
-                        <CalendarPlus className="h-5 w-5" />
-                        {isStudent
-                          ? "Book a Session"
-                          : isSignedIn
-                            ? "Complete Setup to Book"
-                            : "Sign in to Book"}
-                      </Button>
-                      {!isStudent && (
-                        <p className="text-xs text-zinc-400 mt-2">
-                          {isSignedIn
-                            ? "Complete your student profile to book sessions"
-                            : "A student account is required to book sessions"}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
+        {/* Subject hero banner */}
+        <div className="relative h-56 sm:h-72 rounded-2xl overflow-hidden shadow-md">
+          {subject.thumbnailUrl ? (
+            <img
+              src={subject.thumbnailUrl}
+              alt={subject.subjectName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-zinc-800 to-zinc-600">
+              <BookOpen className="h-16 w-16 text-white/20" />
             </div>
-          </CardContent>
-        </Card>
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
+          {/* Badges top-left */}
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            {subject.category && (
+              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full border border-white/30">
+                <Tag className="h-3 w-3" />
+                {subject.category}
+              </span>
+            )}
+            {subject.totalReviews > 0 && (
+              <span className="inline-flex items-center gap-1 bg-yellow-400/95 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                <Star className="h-3 w-3 fill-yellow-900" />
+                {subject.averageRating.toFixed(1)}
+                <span className="font-normal opacity-75">
+                  ({subject.totalReviews})
+                </span>
+              </span>
+            )}
+          </div>
+          {/* Text bottom */}
+          <div className="absolute bottom-0 left-0 right-0 px-6 pb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight drop-shadow">
+              {subject.subjectName}
+            </h1>
+            <p className="text-white/75 text-sm mt-1">
+              Taught by{" "}
+              <Link
+                to={`/mentors/${subject.mentorId}`}
+                className="font-semibold text-white hover:underline underline-offset-2"
+              >
+                {subject.mentorName}
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Booking CTA bar */}
+        {!isMentorRole && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-zinc-100 rounded-2xl px-6 py-4 shadow-sm">
+            <div className="flex-1">
+              <p className="font-semibold text-zinc-900">
+                Ready to learn {subject.subjectName}?
+              </p>
+              <p className="text-sm text-zinc-500">
+                {isStudent
+                  ? "Pick a time that works for you."
+                  : isSignedIn
+                    ? "Complete your student profile to book sessions."
+                    : "A student account is required to book sessions."}
+              </p>
+            </div>
+            <Button
+              size="lg"
+              className="bg-zinc-900 hover:bg-zinc-700 text-white gap-2 shrink-0"
+              onClick={handleBookClick}
+            >
+              <CalendarPlus className="h-5 w-5" />
+              {isStudent
+                ? "Book a Session"
+                : isSignedIn
+                  ? "Complete Setup"
+                  : "Sign in to Book"}
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Mentor card */}
@@ -169,10 +186,8 @@ export default function SubjectDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {ml ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-16 w-16 rounded-full" />
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-4 w-24" />
+                  <div className="flex justify-center py-6">
+                    <Spinner className="h-6 w-6 text-zinc-400" />
                   </div>
                 ) : mentor ? (
                   <>
@@ -301,15 +316,6 @@ export default function SubjectDetailPage() {
                     </div>
                   </div>
                 </div>
-                <Button
-                  className="w-full bg-zinc-900 hover:bg-zinc-700 text-white gap-2 mt-2"
-                  onClick={handleBookClick}
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                  {isStudent
-                    ? "Book a Session for this Subject"
-                    : "Sign in to Book"}
-                </Button>
               </CardContent>
             </Card>
 
@@ -329,8 +335,18 @@ export default function SubjectDetailPage() {
                         to={`/subjects/${s.id}`}
                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-50 border border-transparent hover:border-zinc-100 transition-all group"
                       >
-                        <div className="rounded-lg bg-zinc-100 p-1.5 group-hover:bg-zinc-200 transition-colors">
-                          <BookOpen className="h-3.5 w-3.5 text-zinc-600" />
+                        <div className="rounded-lg overflow-hidden h-12 w-12 bg-zinc-100 shrink-0">
+                          {s.thumbnailUrl ? (
+                            <img
+                              src={s.thumbnailUrl}
+                              alt={s.subjectName}
+                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <BookOpen className="h-4 w-4 text-zinc-400" />
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-zinc-800 truncate">

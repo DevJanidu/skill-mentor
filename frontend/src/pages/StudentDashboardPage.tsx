@@ -3,16 +3,20 @@ import {
   useCurrentStudent,
   useSessionsByStudent,
   useCancelSession,
+  useUploadStudentProfileImage,
+  useUploadStudentCoverImage,
 } from "@/hooks/use-queries";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
   ArrowRight,
   CalendarCheck,
+  Camera,
   CheckCircle,
   Clock,
   ExternalLink,
@@ -21,7 +25,8 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import type { SessionDTO } from "@/types";
 import ReviewDialog from "@/components/ReviewDialog";
@@ -48,6 +53,13 @@ export default function StudentDashboardPage() {
   const [tab, setTab] = useState("ALL");
   const [reviewSession, setReviewSession] = useState<SessionDTO | null>(null);
   const cancelMut = useCancelSession();
+  const uploadProfileImageMut = useUploadStudentProfileImage();
+  const uploadCoverImageMut = useUploadStudentCoverImage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // resolved profile image: custom upload > Clerk imageUrl
+  const avatarSrc = student?.profileImageUrl ?? user?.imageUrl ?? undefined;
 
   // Derived data
   const completedCount = sessions.filter(
@@ -81,14 +93,102 @@ export default function StudentDashboardPage() {
   return (
     <div className="py-10 bg-zinc-50 min-h-screen">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 space-y-8">
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900">
-            Welcome back, {user?.firstName ?? "there"}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Track your sessions and manage your learning journey.
-          </p>
+        {/* ── Header / Profile Hero ───────────────────────────── */}
+        <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
+          {/* Cover banner */}
+          <div className="relative h-48">
+            {student?.coverImageUrl ? (
+              <img
+                src={student.coverImageUrl}
+                alt="Cover"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-linear-to-br from-zinc-800 to-zinc-600" />
+            )}
+            {student && (
+              <>
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploadCoverImageMut.isPending}
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/60 text-white text-xs px-3 py-1.5 hover:bg-black/80 transition-colors disabled:opacity-60"
+                  title="Change cover photo"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  {uploadCoverImageMut.isPending ? "Uploading…" : "Edit cover"}
+                </button>
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !student) return;
+                    const MAX = 10 * 1024 * 1024;
+                    if (file.size > MAX) {
+                      toast.error("Cover image is too large. Max 10 MB.");
+                      e.target.value = "";
+                      return;
+                    }
+                    uploadCoverImageMut.mutate({ id: student.id, file });
+                    e.target.value = "";
+                  }}
+                />
+              </>
+            )}
+          </div>
+
+          {/* Avatar + name row */}
+          <div className="px-6 pb-5">
+            {/* Top row: avatar (overlaps cover) + edit button placeholder */}
+            <div className="flex items-start justify-between">
+              <div className="relative -mt-12 shrink-0">
+                <Avatar className="h-24 w-24 border-4 border-white shadow-lg ring-1 ring-zinc-200">
+                  <AvatarImage src={avatarSrc} alt={user?.fullName ?? ""} />
+                  <AvatarFallback className="text-2xl font-bold bg-zinc-200 text-zinc-700">
+                    {user?.firstName?.[0]}
+                    {user?.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                {student && (
+                  <>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadProfileImageMut.isPending}
+                      className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md hover:bg-zinc-700 transition-colors disabled:opacity-60"
+                      title="Change profile photo"
+                    >
+                      {uploadProfileImageMut.isPending ? (
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Camera className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !student) return;
+                        uploadProfileImageMut.mutate({ id: student.id, file });
+                        e.target.value = "";
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Name + greeting below avatar */}
+            <div className="mt-3">
+              <h1 className="text-xl font-bold text-zinc-900 leading-tight">
+                {user?.fullName ?? user?.firstName ?? "there"}
+              </h1>
+              <p className="text-sm text-zinc-500">Student</p>
+            </div>
+          </div>
         </div>
 
         {/* ── Action Required Banners ──────────────────────────── */}
@@ -233,7 +333,7 @@ export default function StudentDashboardPage() {
                 </div>
                 <div>
                   {loading ? (
-                    <Skeleton className="h-6 w-12" />
+                    <Spinner className="h-4 w-4 text-zinc-400" />
                   ) : (
                     <p className="text-lg font-bold text-zinc-900">{s.value}</p>
                   )}
@@ -298,10 +398,8 @@ export default function StudentDashboardPage() {
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-20 w-full rounded-lg" />
-                    ))}
+                  <div className="flex justify-center py-8">
+                    <Spinner className="h-6 w-6 text-zinc-400" />
                   </div>
                 ) : filtered.length > 0 ? (
                   <div className="space-y-3">

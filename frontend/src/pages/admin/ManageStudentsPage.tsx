@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Search, Trash2 } from "lucide-react";
 import type { StudentDTO } from "@/types";
 
@@ -68,10 +68,8 @@ export default function ManageStudentsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+            <div className="flex justify-center py-8">
+              <Spinner className="h-6 w-6 text-zinc-400" />
             </div>
           ) : filtered.length > 0 ? (
             <div className="overflow-x-auto">

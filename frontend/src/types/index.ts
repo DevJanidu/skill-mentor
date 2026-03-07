@@ -73,6 +73,7 @@ export interface MentorDTO {
   experienceYears: number;
   bio: string | null;
   profileImageUrl: string | null;
+  coverImageUrl: string | null;
   averageRating: number;
   totalReviews: number;
   createdAt: string;
@@ -101,6 +102,8 @@ export interface StudentDTO {
   lastName: string;
   studentCode: string;
   learningGoals: string | null;
+  profileImageUrl: string | null;
+  coverImageUrl: string | null;
 }
 
 export interface CreateStudentDTO {

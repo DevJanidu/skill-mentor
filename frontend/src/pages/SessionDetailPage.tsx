@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSpinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
@@ -154,18 +154,7 @@ export default function SessionDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="py-16 bg-zinc-50 min-h-screen">
-        <div className="mx-auto max-w-7xl px-6 space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-72" />
-            <Skeleton className="h-72" />
-            <Skeleton className="h-72" />
-          </div>
-        </div>
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (!session) {

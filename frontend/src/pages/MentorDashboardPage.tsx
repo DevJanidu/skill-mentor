@@ -1,14 +1,21 @@
 import { useUser } from "@clerk/clerk-react";
-import { useCurrentMentor, useSessionsByMentor } from "@/hooks/use-queries";
+import {
+  useCurrentMentor,
+  useSessionsByMentor,
+  useUploadMentorProfileImage,
+  useUploadMentorCoverImage,
+} from "@/hooks/use-queries";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import {
   AlertCircle,
   ArrowRight,
   BookOpen,
   CalendarCheck,
+  Camera,
   CheckCircle,
   Clock,
   ExternalLink,
@@ -17,6 +24,8 @@ import {
   Plus,
   Star,
 } from "lucide-react";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import type { SessionDTO } from "@/types";
 import {
@@ -35,6 +44,14 @@ export default function MentorDashboardPage() {
     useSessionsByMentor(mentor?.id ?? 0);
 
   const loading = mentorLoading || sessionsLoading;
+
+  const uploadProfileMut = useUploadMentorProfileImage();
+  const uploadCoverMut = useUploadMentorCoverImage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // resolved profile image: custom upload > Clerk synced > Clerk live
+  const avatarSrc = mentor?.profileImageUrl ?? user?.imageUrl ?? undefined;
 
   // Derived stats
   const pendingCount = sessions.filter(
@@ -65,19 +82,114 @@ export default function MentorDashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900">
-          Welcome back, {user?.firstName ?? "Mentor"}
-        </h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          {mentor?.profession
-            ? `${mentor.profession} at ${mentor.company}`
-            : "Manage your teaching operations."}
-        </p>
+      {/* ── Profile Hero ─────────────────────────────────── */}
+      <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
+        {/* Cover banner */}
+        <div className="relative h-48">
+          {mentor?.coverImageUrl ? (
+            <img
+              src={mentor.coverImageUrl}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-linear-to-br from-zinc-800 to-zinc-600" />
+          )}
+          {mentor && (
+            <>
+              <button
+                onClick={() => coverInputRef.current?.click()}
+                disabled={uploadCoverMut.isPending}
+                className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/60 text-white text-xs px-3 py-1.5 hover:bg-black/80 transition-colors disabled:opacity-60"
+                title="Change cover photo"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                {uploadCoverMut.isPending ? "Uploading…" : "Edit cover"}
+              </button>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !mentor) return;
+                  const MAX = 10 * 1024 * 1024;
+                  if (file.size > MAX) {
+                    toast.error("Cover image is too large. Max 10 MB.");
+                    e.target.value = "";
+                    return;
+                  }
+                  uploadCoverMut.mutate({ id: mentor.id, file });
+                  e.target.value = "";
+                }}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Avatar + name row */}
+        <div className="px-6 pb-5">
+          {/* Top row: avatar (overlaps cover) + edit button */}
+          <div className="flex items-start justify-between">
+            <div className="relative -mt-12 shrink-0">
+              <Avatar className="h-24 w-24 border-4 border-white shadow-lg ring-1 ring-zinc-200">
+                <AvatarImage src={avatarSrc} alt={mentor?.fullName ?? ""} />
+                <AvatarFallback className="text-2xl font-bold bg-zinc-200 text-zinc-700">
+                  {user?.firstName?.[0]}
+                  {user?.lastName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              {mentor && (
+                <>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadProfileMut.isPending}
+                    className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md hover:bg-zinc-700 transition-colors disabled:opacity-60"
+                    title="Change profile photo"
+                  >
+                    {uploadProfileMut.isPending ? (
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !mentor) return;
+                      uploadProfileMut.mutate({ id: mentor.id, file });
+                      e.target.value = "";
+                    }}
+                  />
+                </>
+              )}
+            </div>
+            <Link to="/mentor/profile" className="mt-3 shrink-0">
+              <Button variant="outline" size="sm">
+                Edit Profile
+              </Button>
+            </Link>
+          </div>
+          {/* Name + profession below avatar */}
+          <div className="mt-3">
+            <h1 className="text-xl font-bold text-zinc-900 leading-tight">
+              {user?.fullName ?? user?.firstName ?? "Mentor"}
+            </h1>
+            <p className="text-sm text-zinc-500 mt-0.5">
+              {mentor?.profession
+                ? `${mentor.profession} at ${mentor.company}`
+                : "Manage your teaching operations."}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* ── Key Metrics ──────────────────────────────────────────── */}
+      {/* ── Key Metrics ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           {
@@ -112,7 +224,7 @@ export default function MentorDashboardPage() {
               </div>
               <div>
                 {loading ? (
-                  <Skeleton className="h-6 w-12" />
+                  <Spinner className="h-4 w-4 text-zinc-400" />
                 ) : (
                   <p className="text-lg font-bold text-zinc-900">{s.value}</p>
                 )}
@@ -232,10 +344,8 @@ export default function MentorDashboardPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
-              ))}
+            <div className="flex justify-center py-8">
+              <Spinner className="h-6 w-6 text-zinc-400" />
             </div>
           ) : recentSessions.length > 0 ? (
             <div className="space-y-3">

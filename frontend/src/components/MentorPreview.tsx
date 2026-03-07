@@ -134,9 +134,11 @@ export default function MentorPreview() {
                   ))}
                 </div>
 
-                <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-md group">
-                  Book a free session
-                </Button>
+                <Link to="/mentors">
+                  <Button className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-md group">
+                    Book a free session
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           ))}

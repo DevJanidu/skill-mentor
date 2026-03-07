@@ -2,17 +2,21 @@ import {
   useCurrentMentor,
   useCreateMentor,
   useUpdateMentor,
+  useUploadMentorProfileImage,
+  useUploadMentorCoverImage,
 } from "@/hooks/use-queries";
+import { useUser } from "@clerk/clerk-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSpinner } from "@/components/ui/spinner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Star } from "lucide-react";
+import { Camera, Star } from "lucide-react";
 
 const profileSchema = z.object({
   phoneNumber: z
@@ -36,10 +40,16 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function MentorProfilePage() {
+  const { user } = useUser();
   const { mentor, isLoading, notFound } = useCurrentMentor();
   const createMentor = useCreateMentor();
   const updateMentor = useUpdateMentor();
+  const uploadProfileMut = useUploadMentorProfileImage();
+  const uploadCoverMut = useUploadMentorCoverImage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
+  const avatarSrc = mentor?.profileImageUrl ?? user?.imageUrl ?? undefined;
   const isCreateMode = notFound;
 
   const {
@@ -90,12 +100,7 @@ export default function MentorProfilePage() {
   const isSaving = createMentor.isPending || updateMentor.isPending;
 
   if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   return (
@@ -111,6 +116,110 @@ export default function MentorProfilePage() {
             : "Update your profile information visible to students."}
         </p>
       </div>
+
+      {/* Images — only shown when editing an existing profile */}
+      {mentor && (
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Profile Images</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Cover photo */}
+            <div>
+              <p className="text-xs font-medium text-zinc-500 mb-2">
+                Cover Photo
+              </p>
+              <div className="relative h-48 rounded-xl overflow-hidden">
+                {mentor.coverImageUrl ? (
+                  <img
+                    src={mentor.coverImageUrl}
+                    alt="Cover"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-linear-to-br from-zinc-800 to-zinc-600" />
+                )}
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploadCoverMut.isPending}
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/60 text-white text-xs px-3 py-1.5 hover:bg-black/80 transition-colors disabled:opacity-60"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  {uploadCoverMut.isPending ? "Uploading…" : "Edit cover"}
+                </button>
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const MAX = 10 * 1024 * 1024;
+                    if (file.size > MAX) {
+                      toast.error("Cover image is too large. Max 10 MB.");
+                      e.target.value = "";
+                      return;
+                    }
+                    uploadCoverMut.mutate({ id: mentor.id, file });
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Profile picture */}
+            <div>
+              <p className="text-xs font-medium text-zinc-500 mb-2">
+                Profile Picture
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <Avatar className="h-16 w-16 ring-2 ring-zinc-200">
+                    <AvatarImage src={avatarSrc} alt={mentor.fullName ?? ""} />
+                    <AvatarFallback className="text-lg font-bold bg-zinc-200 text-zinc-700">
+                      {user?.firstName?.[0]}
+                      {user?.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadProfileMut.isPending}
+                    className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md hover:bg-zinc-700 transition-colors disabled:opacity-60"
+                  >
+                    {uploadProfileMut.isPending ? (
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Camera className="h-3 w-3" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      uploadProfileMut.mutate({ id: mentor.id, file });
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-zinc-800">
+                    {mentor.fullName}
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    Your Clerk profile photo is used by default. Upload a custom
+                    photo to override it.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats summary — only in edit mode */}
       {mentor && (

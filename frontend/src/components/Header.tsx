@@ -1,7 +1,8 @@
-import { Images } from '@/assets/assets';
-import { Button } from '@/components/ui/button';
-import HeroBg from './layouts/HeroBg';
-import TrustedCompanies from './TrustedCompanies';
+import { Images } from "@/assets/assets";
+import { Button } from "@/components/ui/button";
+import HeroBg from "./layouts/HeroBg";
+import TrustedCompanies from "./TrustedCompanies";
+import { Link } from "react-router-dom";
 
 function Header() {
   return (
@@ -10,19 +11,29 @@ function Header() {
         {/* LEFT CONTENT */}
         <div className="text-center md:text-left mt-20">
           <h1 className="text-4xl font-bold leading-tight text-zinc-900 md:text-5xl lg:text-6xl">
-            Learn Smarter with <span className="text-zinc-600">Skill Mentor</span>
+            Learn Smarter with{" "}
+            <span className="text-zinc-600">Skill Mentor</span>
           </h1>
 
           <p className="mt-6 mx-auto md:mx-0 max-w-xl text-lg text-zinc-600">
-            Skill Mentor helps students choose their preferred subjects, join expert-led learning
-            sessions, and grow their skills with confidence.
+            Skill Mentor helps students choose their preferred subjects, join
+            expert-led learning sessions, and grow their skills with confidence.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-4">
-            <Button className="px-6 py-5 text-base w-full sm:w-auto">Explore Subjects</Button>
-            <Button variant="outline" className="px-6 py-5 text-base w-full sm:w-auto">
-              Join a Session
-            </Button>
+            <Link to="/subjects">
+              <Button className="px-6 py-5 text-base w-full sm:w-auto">
+                Explore Subjects
+              </Button>
+            </Link>
+            <Link to="/subjects">
+              <Button
+                variant="outline"
+                className="px-6 py-5 text-base w-full sm:w-auto"
+              >
+                Join a Session
+              </Button>
+            </Link>
           </div>
         </div>
 

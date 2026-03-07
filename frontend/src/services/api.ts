@@ -82,6 +82,20 @@ export const mentorsApi = {
       )
       .then((r) => r.data);
   },
+  /** Upload a cover/banner image (multipart) — returns updated MentorDTO */
+  uploadCoverImage: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api
+      .post<import("@/types").MentorDTO>(
+        `/api/mentors/${id}/cover-image`,
+        form,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      )
+      .then((r) => r.data);
+  },
 };
 
 /* ── Students ──────────────────────────────────────────────────────────── */
@@ -98,6 +112,34 @@ export const studentsApi = {
     api.put<StudentDTO>(`/api/students/${id}`, data).then((r) => r.data),
   delete: (id: number) =>
     api.delete<string>(`/api/students/${id}`).then((r) => r.data),
+  /** Upload a profile image (multipart) — returns updated StudentDTO */
+  uploadProfileImage: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api
+      .post<import("@/types").StudentDTO>(
+        `/api/students/${id}/profile-image`,
+        form,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      )
+      .then((r) => r.data);
+  },
+  /** Upload a cover/banner image (multipart) — returns updated StudentDTO */
+  uploadCoverImage: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api
+      .post<import("@/types").StudentDTO>(
+        `/api/students/${id}/cover-image`,
+        form,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      )
+      .then((r) => r.data);
+  },
 };
 
 /* ── Subjects ──────────────────────────────────────────────────────────── */

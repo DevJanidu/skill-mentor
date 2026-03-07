@@ -1,6 +1,6 @@
 import { useCurrentMentor, useSessionsByMentor } from "@/hooks/use-queries";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Star } from "lucide-react";
 import { formatSessionDate } from "@/lib/session-utils";
 
@@ -46,7 +46,9 @@ export default function MentorReviewsPage() {
         <Card>
           <CardContent className="p-6 flex flex-col items-center justify-center">
             {isLoading ? (
-              <Skeleton className="h-12 w-16" />
+              <div className="flex justify-center py-6">
+                <Spinner className="h-6 w-6 text-zinc-400" />
+              </div>
             ) : (
               <>
                 <p className="text-4xl font-bold text-zinc-900">{avgRating}</p>
@@ -100,10 +102,8 @@ export default function MentorReviewsPage() {
         </h2>
 
         {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-lg" />
-            ))}
+          <div className="flex justify-center py-8">
+            <Spinner className="h-6 w-6 text-zinc-400" />
           </div>
         ) : reviewedSessions.length > 0 ? (
           <div className="space-y-3">

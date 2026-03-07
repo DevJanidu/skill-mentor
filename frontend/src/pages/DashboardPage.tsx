@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import {
   BookOpen,
@@ -250,7 +250,7 @@ function MentorDashboard({
                 </div>
                 <div>
                   {loading ? (
-                    <Skeleton className="h-6 w-10" />
+                    <Spinner className="h-4 w-4 text-zinc-400" />
                   ) : (
                     <p className="text-lg font-bold text-zinc-900">
                       {item.value}
@@ -627,7 +627,7 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         {loading ? (
-                          <Skeleton className="h-6 w-10 mb-0.5" />
+                          <Spinner className="h-4 w-4 text-zinc-400" />
                         ) : (
                           <p className="text-xl font-bold text-zinc-900 leading-none">
                             {item.value}
@@ -816,10 +816,8 @@ export default function DashboardPage() {
                 </div>
               </div>
               {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-24 w-full rounded-xl" />
-                  ))}
+                <div className="flex justify-center py-8">
+                  <Spinner className="h-6 w-6 text-zinc-400" />
                 </div>
               ) : paginatedSessions.length > 0 ? (
                 <div className="space-y-2">

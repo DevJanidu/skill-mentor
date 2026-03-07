@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -257,7 +257,7 @@ export default function MentorSessionsPage() {
               </div>
               <div>
                 {loading ? (
-                  <Skeleton className="h-6 w-10" />
+                  <Spinner className="h-4 w-4 text-zinc-400" />
                 ) : (
                   <p className="text-lg font-bold text-zinc-900">{s.value}</p>
                 )}
@@ -385,10 +385,8 @@ export default function MentorSessionsPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-lg" />
-            ))}
+          <div className="flex justify-center py-8">
+            <Spinner className="h-6 w-6 text-zinc-400" />
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Briefcase, GraduationCap, Search } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -61,17 +61,8 @@ export default function MentorsPage() {
 
         {/* Grid */}
         {ml ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="p-8 space-y-4">
-                  <Skeleton className="h-16 w-16 rounded-full" />
-                  <Skeleton className="h-5 w-40" />
-                  <Skeleton className="h-4 w-56" />
-                  <Skeleton className="h-10 w-full" />
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex justify-center py-16">
+            <Spinner className="h-8 w-8 text-zinc-400" />
           </div>
         ) : filtered && filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -85,12 +76,10 @@ export default function MentorsPage() {
                   <CardContent className="p-8">
                     <div className="flex items-start justify-between mb-6">
                       <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-                        {m.profileImageUrl && (
-                          <AvatarImage
-                            src={m.profileImageUrl}
-                            alt={m.fullName}
-                          />
-                        )}
+                        <AvatarImage
+                          src={m.profileImageUrl ?? undefined}
+                          alt={m.fullName}
+                        />
                         <AvatarFallback className="text-lg font-bold bg-zinc-100">
                           {m.firstName?.[0]}
                           {m.lastName?.[0]}

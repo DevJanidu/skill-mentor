@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, CalendarCheck, UserCircle } from "lucide-react";
 import type { SessionType } from "@/types";
+import { PageSpinner } from "@/components/ui/spinner";
 
 export default function MentorCreateSessionPage() {
   const navigate = useNavigate();
@@ -67,11 +68,7 @@ export default function MentorCreateSessionPage() {
   };
 
   if (mentorLoading) {
-    return (
-      <div className="py-24 text-center text-zinc-500">
-        Loading mentor profile…
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (notFound) {

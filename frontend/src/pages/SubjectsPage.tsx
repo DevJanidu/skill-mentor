@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -166,18 +166,8 @@ export default function SubjectsPage() {
 
         {/* Grid */}
         {sl ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-44 w-full" />
-                <CardContent className="p-6 space-y-3">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-10 w-full mt-2" />
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex justify-center py-16">
+            <Spinner className="h-8 w-8 text-zinc-400" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24">
@@ -199,7 +189,7 @@ export default function SubjectsPage() {
                   className="group bg-white border-zinc-100 hover:border-zinc-300 hover:shadow-xl transition-all duration-200 flex flex-col overflow-hidden"
                 >
                   {/* Thumbnail */}
-                  <div className="relative h-44 bg-linear-to-br from-zinc-100 to-zinc-200 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="relative h-52 bg-linear-to-br from-zinc-100 to-zinc-200 flex items-center justify-center overflow-hidden shrink-0">
                     {subject.thumbnailUrl ? (
                       <img
                         src={subject.thumbnailUrl}
@@ -211,6 +201,12 @@ export default function SubjectsPage() {
                         <BookOpen className="h-10 w-10 text-zinc-600" />
                       </div>
                     )}
+                    {/* Bottom overlay for quick title */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/50 to-transparent px-4 py-3">
+                      <p className="text-sm text-white font-semibold truncate">
+                        {subject.subjectName}
+                      </p>
+                    </div>
                     {/* Category badge overlay */}
                     {subject.category && (
                       <div className="absolute top-3 left-3">

@@ -2,7 +2,7 @@ import { useOpenGroupSessions, useJoinSession } from "@/hooks/use-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { CalendarCheck, Clock, User, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -24,10 +24,8 @@ export default function OpenGroupSessionsPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48 w-full rounded-lg" />
-            ))}
+          <div className="flex justify-center py-16">
+            <Spinner className="h-8 w-8 text-zinc-400" />
           </div>
         ) : sessions && sessions.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

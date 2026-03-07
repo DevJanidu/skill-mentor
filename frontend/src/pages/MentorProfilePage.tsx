@@ -1,17 +1,18 @@
-﻿import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import {
   useMentor,
   useMentorSessions,
   useSubjects,
   useUploadMentorProfileImage,
+  useUploadMentorCoverImage,
 } from "@/hooks/use-queries";
 import { getRoles } from "@/lib/roles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSpinner } from "@/components/ui/spinner";
 import {
   ArrowLeft,
   BookOpen,
@@ -30,6 +31,7 @@ import {
   Tag,
 } from "lucide-react";
 import { useRef, useState, useMemo } from "react";
+import { toast } from "sonner";
 import BookingDialog from "@/components/BookingDialog";
 
 const SUBJECT_PAGE_SIZE = 6;
@@ -65,7 +67,9 @@ export default function MentorProfilePage() {
   const [reviewPage, setReviewPage] = useState(1);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const uploadImageMut = useUploadMentorProfileImage();
+  const uploadCoverMut = useUploadMentorCoverImage();
 
   const roles = getRoles(
     user?.publicMetadata as Record<string, unknown> | undefined,
@@ -91,6 +95,20 @@ export default function MentorProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     uploadImageMut.mutate({ id, file });
+    e.target.value = "";
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const MAX = 10 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error("Cover image is too large. Max 10 MB.");
+      e.target.value = "";
+      return;
+    }
+    uploadCoverMut.mutate({ id, file });
+    e.target.value = "";
   };
 
   const mentorSubjects = allSubjects?.filter((s) => s.mentorId === id) ?? [];
@@ -121,20 +139,7 @@ export default function MentorProfilePage() {
   );
 
   if (isLoading) {
-    return (
-      <div className="py-16">
-        <div className="mx-auto max-w-5xl px-6 space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
-            ))}
-          </div>
-          <Skeleton className="h-64 w-full rounded-2xl" />
-        </div>
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (!mentor) {
@@ -145,7 +150,6 @@ export default function MentorProfilePage() {
           to="/mentors"
           className="text-blue-600 hover:underline mt-2 inline-block"
         >
-          {" "}
           Back to mentors
         </Link>
       </div>
@@ -155,7 +159,6 @@ export default function MentorProfilePage() {
   return (
     <div className="py-12 bg-zinc-50 min-h-screen">
       <div className="mx-auto max-w-5xl px-6 space-y-8">
-        {/* Back */}
         <Link
           to="/mentors"
           className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -163,35 +166,73 @@ export default function MentorProfilePage() {
           <ArrowLeft className="h-4 w-4" /> Back to mentors
         </Link>
 
-        {/* Profile header */}
         <Card className="overflow-hidden border-zinc-100">
           <CardContent className="p-0">
-            {/* Banner */}
-            <div className="h-28 bg-linear-to-br from-zinc-800 to-zinc-600" />
+            <div className="relative h-48">
+              {mentor.coverImageUrl ? (
+                <img
+                  src={mentor.coverImageUrl}
+                  alt="Cover"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-linear-to-br from-zinc-800 to-zinc-600" />
+              )}
+
+              {isOwnProfile && (
+                <>
+                  <button
+                    onClick={() => coverInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/60 text-white text-xs px-3 py-1.5 hover:bg-black/80 transition-colors"
+                    title="Change cover photo"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                    {uploadCoverMut.isPending ? "Uploading…" : "Edit cover"}
+                  </button>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleCoverChange}
+                  />
+                </>
+              )}
+            </div>
+
             <div className="px-8 pb-8">
-              <div className="flex flex-col sm:flex-row gap-5 items-end sm:items-start -mt-12">
-                {/* Avatar with upload */}
-                <div className="relative shrink-0">
+              {/* Top row: avatar overlapping cover + action */}
+              <div className="flex items-start justify-between">
+                <div className="relative -mt-12 shrink-0">
                   <Avatar className="h-24 w-24 border-4 border-white shadow-lg ring-1 ring-zinc-200">
-                    {mentor.profileImageUrl && (
-                      <AvatarImage
-                        src={mentor.profileImageUrl}
-                        alt={mentor.fullName}
-                      />
-                    )}
+                    <AvatarImage
+                      src={
+                        mentor.profileImageUrl ??
+                        (isOwnProfile
+                          ? (user?.imageUrl ?? undefined)
+                          : undefined)
+                      }
+                      alt={mentor.fullName}
+                    />
                     <AvatarFallback className="text-2xl font-bold bg-zinc-200 text-zinc-700">
                       {mentor.firstName?.[0]}
                       {mentor.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
+
                   {isOwnProfile && (
                     <>
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md hover:bg-zinc-700 transition-colors"
+                        disabled={uploadImageMut.isPending}
+                        className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-md hover:bg-zinc-700 transition-colors disabled:opacity-60"
                         title="Change profile photo"
                       >
-                        <Camera className="h-3.5 w-3.5" />
+                        {uploadImageMut.isPending ? (
+                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                          <Camera className="h-3.5 w-3.5" />
+                        )}
                       </button>
                       <input
                         ref={fileInputRef}
@@ -203,65 +244,59 @@ export default function MentorProfilePage() {
                     </>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 pt-3">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                    <div className="space-y-1.5">
-                      <h1 className="text-2xl font-bold text-zinc-900">
-                        {mentor.fullName}
-                      </h1>
-                      <p className="text-zinc-600 flex items-center gap-1.5 text-sm">
-                        <Briefcase className="h-4 w-4 shrink-0" />
-                        {mentor.profession} at {mentor.company}
-                      </p>
-                      {(mentor.averageRating ?? 0) > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Stars value={mentor.averageRating ?? 0} />
-                          <span className="text-sm font-semibold text-zinc-900">
-                            {(mentor.averageRating ?? 0).toFixed(1)}
-                          </span>
-                          <span className="text-sm text-zinc-400">
-                            ({mentor.totalReviews ?? 0} review
-                            {(mentor.totalReviews ?? 0) !== 1 ? "s" : ""})
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-3 text-xs text-zinc-500 pt-1">
-                        <span className="flex items-center gap-1">
-                          <GraduationCap className="h-3.5 w-3.5" />{" "}
-                          {mentor.experienceYears}+ years exp.
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5" /> {mentor.email}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3.5 w-3.5" /> {mentor.phoneNumber}
-                        </span>
-                      </div>
-                    </div>
-                    {canBook && (
-                      <Button
-                        onClick={handleBookClick}
-                        className="bg-zinc-900 hover:bg-zinc-800 text-white shrink-0"
-                      >
-                        {isStudent
-                          ? "Book a Session"
-                          : isSignedIn
-                            ? "Complete Setup to Book"
-                            : "Sign in to Book"}
-                      </Button>
-                    )}
-                  </div>
+
+                <div className="mt-3 shrink-0">
+                  {canBook && (
+                    <Button
+                      onClick={handleBookClick}
+                      className="bg-zinc-900 hover:bg-zinc-800 text-white"
+                    >
+                      {isStudent
+                        ? "Book a Session"
+                        : isSignedIn
+                          ? "Complete Setup to Book"
+                          : "Sign in to Book"}
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              {/* Bio */}
-              {mentor.bio && (
-                <div className="mt-6 border-t border-zinc-100 pt-5">
-                  <p className="text-sm text-zinc-600 leading-relaxed">
-                    {mentor.bio}
-                  </p>
+              {/* Name + meta below avatar */}
+              <div className="mt-3">
+                <h1 className="text-2xl font-bold text-zinc-900">
+                  {mentor.fullName}
+                </h1>
+                <p className="text-zinc-600 flex items-center gap-1.5 text-sm mt-1">
+                  <Briefcase className="h-4 w-4 shrink-0" /> {mentor.profession}{" "}
+                  at {mentor.company}
+                </p>
+
+                {(mentor.averageRating ?? 0) > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Stars value={mentor.averageRating ?? 0} />
+                    <span className="text-sm font-semibold text-zinc-900">
+                      {(mentor.averageRating ?? 0).toFixed(1)}
+                    </span>
+                    <span className="text-sm text-zinc-400">
+                      ({mentor.totalReviews ?? 0} review
+                      {(mentor.totalReviews ?? 0) !== 1 ? "s" : ""})
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3 text-xs text-zinc-500 pt-1">
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="h-3.5 w-3.5" />{" "}
+                    {mentor.experienceYears}+ years exp.
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Mail className="h-3.5 w-3.5" /> {mentor.email}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5" /> {mentor.phoneNumber}
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -326,8 +361,7 @@ export default function MentorProfilePage() {
                   key={s.id}
                   className="group bg-white hover:border-zinc-300 hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden"
                 >
-                  {/* Thumbnail */}
-                  <div className="relative h-36 bg-linear-to-br from-zinc-100 to-zinc-200 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="relative h-52 bg-linear-to-br from-zinc-100 to-zinc-200 flex items-center justify-center overflow-hidden shrink-0">
                     {s.thumbnailUrl ? (
                       <img
                         src={s.thumbnailUrl}
@@ -337,18 +371,22 @@ export default function MentorProfilePage() {
                     ) : (
                       <BookOpen className="h-8 w-8 text-zinc-400 opacity-40" />
                     )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/50 to-transparent px-3 py-2">
+                      <p className="text-sm text-white font-semibold truncate">
+                        {s.subjectName}
+                      </p>
+                    </div>
                     {s.category && (
                       <div className="absolute top-2 left-2">
                         <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm border border-zinc-200 text-zinc-700 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm">
-                          <Tag className="h-2.5 w-2.5" />
-                          {s.category}
+                          <Tag className="h-2.5 w-2.5" /> {s.category}
                         </span>
                       </div>
                     )}
                     {s.totalReviews > 0 && (
                       <div className="absolute top-2 right-2">
                         <span className="inline-flex items-center gap-1 bg-yellow-400/95 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
-                          <Star className="h-2.5 w-2.5 fill-yellow-900" />
+                          <Star className="h-2.5 w-2.5 fill-yellow-900" />{" "}
                           {(s.averageRating ?? 0).toFixed(1)}
                         </span>
                       </div>
@@ -376,6 +414,7 @@ export default function MentorProfilePage() {
                 </Card>
               ))}
             </div>
+
             {mentorSubjects.length > SUBJECT_PAGE_SIZE && (
               <div className="flex items-center justify-between border-t pt-4">
                 <p className="text-xs text-zinc-500">
@@ -495,7 +534,6 @@ export default function MentorProfilePage() {
         )}
       </div>
 
-      {/* Booking dialog */}
       <BookingDialog
         open={bookingOpen}
         onOpenChange={setBookingOpen}

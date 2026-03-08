@@ -7,6 +7,7 @@ import {
   useCancelSession,
 } from "@/hooks/use-queries";
 import { useUser } from "@clerk/clerk-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { getRoles } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -104,7 +105,7 @@ function ResourceRow({
 export default function SessionDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const id = Number(sessionId);
-  const { data: session, isLoading } = useSession(id);
+  const { data: session, isLoading, error } = useSession(id);
   const { user } = useUser();
   const roles = getRoles(
     user?.publicMetadata as Record<string, unknown> | undefined,
@@ -116,6 +117,7 @@ export default function SessionDetailPage() {
   const completeMut = useCompleteSession();
   const cancelMut = useCancelSession();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [meetingLink, setMeetingLink] = useState("");
@@ -155,6 +157,30 @@ export default function SessionDetailPage() {
 
   if (isLoading) {
     return <PageSpinner />;
+  }
+
+  if (error) {
+    const err = error as unknown as {
+      response?: { status?: number };
+      status?: number;
+    };
+    const status = err?.response?.status ?? err?.status;
+    const isForbidden = status === 403;
+    return (
+      <div className="py-24 text-center">
+        <p className="text-zinc-500">
+          {isForbidden
+            ? "You do not have access to this session."
+            : "Session not found."}
+        </p>
+        <Link
+          to="/dashboard"
+          className="text-blue-600 hover:underline mt-2 inline-block"
+        >
+          Back to dashboard
+        </Link>
+      </div>
+    );
   }
 
   if (!session) {
@@ -214,7 +240,13 @@ export default function SessionDetailPage() {
             {isMentor && session.sessionStatus === "SCHEDULED" && (
               <Button
                 size="sm"
-                onClick={() => startMut.mutate(id)}
+                onClick={() =>
+                  startMut.mutate(id, {
+                    onSuccess: () => {
+                      qc.refetchQueries({ queryKey: ["sessions", id] });
+                    },
+                  })
+                }
                 disabled={startMut.isPending}
               >
                 <Play className="mr-1.5 h-3.5 w-3.5" />
@@ -224,7 +256,16 @@ export default function SessionDetailPage() {
             {isMentor && session.sessionStatus === "STARTED" && (
               <Button
                 size="sm"
-                onClick={() => completeMut.mutate({ id })}
+                onClick={() =>
+                  completeMut.mutate(
+                    { id },
+                    {
+                      onSuccess: () => {
+                        qc.refetchQueries({ queryKey: ["sessions", id] });
+                      },
+                    },
+                  )
+                }
                 disabled={completeMut.isPending}
               >
                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />

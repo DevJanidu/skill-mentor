@@ -28,6 +28,8 @@ public class SubjectMapper {
         // Round to one decimal place
         avg = Math.round(avg * 10.0) / 10.0;
 
+        int enrollmentCount = subject.getSessions() == null ? 0 : subject.getSessions().size();
+
         return SubjectDTO.builder()
                 .id(subject.getId())
                 .subjectName(subject.getName())
@@ -38,6 +40,7 @@ public class SubjectMapper {
                 .mentorName(subject.getMentor().getUser().getFullName())
                 .averageRating(avg)
                 .totalReviews(ratings.size())
+                .enrollmentCount(enrollmentCount)
                 .createdAt(subject.getCreatedAt())
                 .updatedAt(subject.getUpdatedAt())
                 .build();

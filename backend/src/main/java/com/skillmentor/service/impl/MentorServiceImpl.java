@@ -199,12 +199,14 @@ public class MentorServiceImpl implements MentorService {
     })
     @Override
     @Transactional
-    public MentorDTO uploadProfileImage(Long mentorId, MultipartFile file) {
+    public MentorDTO uploadProfileImage(Long mentorId, MultipartFile file, String callerClerkId) {
         log.debug("Uploading profile image for mentor {}", mentorId);
 
         Mentor mentor = mentorRepository.findById(mentorId)
                 .orElseThrow(() -> new SkillMentorException(
                         "Mentor not found with id " + mentorId, HttpStatus.NOT_FOUND));
+
+        validateMentorOwnership(mentor, callerClerkId);
 
         String secureUrl = cloudinaryService.uploadUnsigned(file, "mentors");
         mentor.getUser().setProfileImageUrl(secureUrl);
@@ -219,12 +221,14 @@ public class MentorServiceImpl implements MentorService {
     })
     @Override
     @Transactional
-    public MentorDTO uploadCoverImage(Long mentorId, MultipartFile file) {
+    public MentorDTO uploadCoverImage(Long mentorId, MultipartFile file, String callerClerkId) {
         log.debug("Uploading cover image for mentor {}", mentorId);
 
         Mentor mentor = mentorRepository.findById(mentorId)
                 .orElseThrow(() -> new SkillMentorException(
                         "Mentor not found with id " + mentorId, HttpStatus.NOT_FOUND));
+
+        validateMentorOwnership(mentor, callerClerkId);
 
         String secureUrl = cloudinaryService.uploadUnsigned(file, "mentors/covers");
         mentor.setCoverImageUrl(secureUrl);
@@ -232,5 +236,18 @@ public class MentorServiceImpl implements MentorService {
 
         log.info("Cover image uploaded for mentor {} → {}", mentorId, secureUrl);
         return MentorMapper.toDto(mentor);
+    }
+
+    /** Verify caller is the mentor's owner or an admin. */
+    private void validateMentorOwnership(Mentor mentor, String callerClerkId) {
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && !callerClerkId.equals(mentor.getUser().getClerkId())) {
+            throw new SkillMentorException(
+                    "You do not have permission to modify this mentor profile",
+                    HttpStatus.FORBIDDEN);
+        }
     }
 }

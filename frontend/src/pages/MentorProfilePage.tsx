@@ -19,16 +19,21 @@ import {
   Briefcase,
   CalendarCheck,
   Camera,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
+  DollarSign,
   ExternalLink,
+  Github,
   GraduationCap,
   Mail,
   MessageSquare,
   Phone,
   Star,
   Tag,
+  ThumbsUp,
+  Users2,
 } from "lucide-react";
 import { useRef, useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -119,6 +124,20 @@ export default function MentorProfilePage() {
     () => sessions?.filter((s) => s.studentReview != null) ?? [],
     [sessions],
   );
+
+  const totalStudents = useMemo(() => {
+    const ids = new Set(
+      sessions?.filter((s) => s.studentId != null).map((s) => s.studentId) ??
+        [],
+    );
+    return ids.size;
+  }, [sessions]);
+
+  const positiveReviewPct = useMemo(() => {
+    if (reviews.length === 0) return null;
+    const positive = reviews.filter((r) => (r.studentRating ?? 0) >= 4).length;
+    return Math.round((positive / reviews.length) * 100);
+  }, [reviews]);
 
   const totalSubjectPages = Math.max(
     1,
@@ -263,9 +282,16 @@ export default function MentorProfilePage() {
 
               {/* Name + meta below avatar */}
               <div className="mt-3">
-                <h1 className="text-2xl font-bold text-zinc-900">
-                  {mentor.fullName}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-zinc-900">
+                    {mentor.title ? `${mentor.title} ` : ""}
+                    {mentor.fullName}
+                  </h1>
+                  <CheckCircle2
+                    className="h-5 w-5 text-blue-600 fill-blue-50 shrink-0"
+                    aria-label="Verified Mentor"
+                  />
+                </div>
                 <p className="text-zinc-600 flex items-center gap-1.5 text-sm mt-1">
                   <Briefcase className="h-4 w-4 shrink-0" /> {mentor.profession}{" "}
                   at {mentor.company}
@@ -296,13 +322,58 @@ export default function MentorProfilePage() {
                     <Phone className="h-3.5 w-3.5" /> {mentor.phoneNumber}
                   </span>
                 </div>
+
+                {(mentor.linkedinUrl || mentor.githubUrl) && (
+                  <div className="flex items-center gap-4 pt-1">
+                    {mentor.linkedinUrl && (
+                      <a
+                        href={mentor.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0A66C2] hover:underline"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-3.5 w-3.5 fill-[#0A66C2] shrink-0"
+                          aria-hidden="true"
+                        >
+                          <path d="M20.447 20.452H17.21v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.984V9h3.102v1.561h.043c.432-.82 1.489-1.685 3.065-1.685 3.276 0 3.881 2.156 3.881 4.959v6.617zM5.337 7.433a1.8 1.8 0 1 1 0-3.601 1.8 1.8 0 0 1 0 3.601zm1.558 13.019H3.779V9h3.116v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                        </svg>
+                        LinkedIn
+                      </a>
+                    )}
+                    {mentor.githubUrl && (
+                      <a
+                        href={mentor.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-700 hover:underline"
+                      >
+                        <Github className="h-3.5 w-3.5" />
+                        GitHub
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Bio / About */}
+        {mentor.bio && (
+          <Card className="bg-white">
+            <CardContent className="p-6">
+              <h2 className="text-base font-bold text-zinc-900 mb-2">About</h2>
+              <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
+                {mentor.bio}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {[
             {
               label: "Experience",
@@ -328,6 +399,32 @@ export default function MentorProfilePage() {
               icon: Clock,
               color: "text-amber-600 bg-amber-50",
             },
+            {
+              label: "Students Taught",
+              value: String(totalStudents),
+              icon: Users2,
+              color: "text-purple-600 bg-purple-50",
+            },
+            ...(positiveReviewPct !== null
+              ? [
+                  {
+                    label: "Positive Reviews",
+                    value: `${positiveReviewPct}%`,
+                    icon: ThumbsUp,
+                    color: "text-rose-600 bg-rose-50",
+                  },
+                ]
+              : []),
+            ...(mentor.hourlyRate != null
+              ? [
+                  {
+                    label: "Hourly Rate",
+                    value: `LKR ${Number(mentor.hourlyRate).toLocaleString()}`,
+                    icon: DollarSign,
+                    color: "text-emerald-600 bg-emerald-50",
+                  },
+                ]
+              : []),
           ].map((s) => (
             <Card key={s.label} className="bg-white">
               <CardContent className="p-4 flex items-center gap-3">
@@ -399,6 +496,13 @@ export default function MentorProfilePage() {
                     {s.description && (
                       <p className="text-xs text-zinc-500 line-clamp-2 flex-1">
                         {s.description}
+                      </p>
+                    )}
+                    {s.enrollmentCount > 0 && (
+                      <p className="text-xs text-zinc-400 flex items-center gap-1">
+                        <Users2 className="h-3 w-3" />
+                        {s.enrollmentCount} student
+                        {s.enrollmentCount !== 1 ? "s" : ""}
                       </p>
                     )}
                     <Link to={`/subjects/${s.id}`} className="mt-auto">

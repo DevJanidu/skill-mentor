@@ -94,25 +94,27 @@ public class MentorController extends AbstractController {
      * POST /api/mentors/{id}/profile-image
      * Upload or replace the profile image for a mentor (stored on User entity via Cloudinary).
      */
-    @PreAuthorize("hasAnyRole('ADMIN','MENTOR')")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MentorDTO> uploadProfileImage(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        return sendOkResponse(mentorService.uploadProfileImage(id, file));
+        return sendOkResponse(mentorService.uploadProfileImage(id, file, userPrincipal.getId()));
     }
 
     /**
      * POST /api/mentors/{id}/cover-image
      * Upload or replace the cover/banner image for a mentor.
      */
-    @PreAuthorize("hasAnyRole('ADMIN','MENTOR')")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping(value = "/{id}/cover-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MentorDTO> uploadCoverImage(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        return sendOkResponse(mentorService.uploadCoverImage(id, file));
+        return sendOkResponse(mentorService.uploadCoverImage(id, file, userPrincipal.getId()));
     }
 }

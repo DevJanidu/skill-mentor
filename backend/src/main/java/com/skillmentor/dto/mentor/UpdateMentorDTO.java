@@ -3,6 +3,8 @@ package com.skillmentor.dto.mentor;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,8 +14,8 @@ public class UpdateMentorDTO {
 
     @NotBlank(message = "Phone number is required")
     @Pattern(
-            regexp = "^(\\+94|0)[7][0-9]{8}$",
-            message = "Phone number must be a valid Sri Lankan mobile number"
+            regexp = "^(\\+[1-9]\\d{7,14}|0[7][0-9]{8})$",
+            message = "Phone number must be a valid mobile number (e.g. 0712345678 or +447911123456)"
     )
     private String phoneNumber;
 
@@ -35,4 +37,28 @@ public class UpdateMentorDTO {
 
     @Size(max = 500, message = "Bio cannot exceed 500 characters")
     private String bio;
+
+    @NotNull(message = "Hourly rate is required")
+    @DecimalMin(value = "0.01", message = "Hourly rate must be greater than 0")
+    private BigDecimal hourlyRate;
+
+    @NotBlank(message = "Bank account name is required")
+    @Size(max = 100, message = "Bank account name cannot exceed 100 characters")
+    private String bankAccountName;
+
+    @NotBlank(message = "Bank account number is required")
+    @Size(max = 30, message = "Bank account number cannot exceed 30 characters")
+    private String bankAccountNumber;
+
+    @NotBlank(message = "Bank name is required")
+    @Size(max = 100, message = "Bank name cannot exceed 100 characters")
+    private String bankName;
+
+    @Pattern(regexp = "^(https?://.{3,})?$", message = "LinkedIn URL must start with http:// or https://")
+    @Size(max = 255, message = "LinkedIn URL too long")
+    private String linkedinUrl;
+
+    @Pattern(regexp = "^(https?://.{3,})?$", message = "GitHub URL must start with http:// or https://")
+    @Size(max = 255, message = "GitHub URL too long")
+    private String githubUrl;
 }

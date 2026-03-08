@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth, useUser, SignIn, SignUp } from "@clerk/clerk-react";
 import { useEffect } from "react";
 import { setAuthTokenGetter } from "@/lib/api";
 import { isMentor } from "@/lib/roles";
@@ -34,6 +34,7 @@ import MentorDashboardPage from "@/pages/MentorDashboardPage";
 import MentorReviewsPage from "@/pages/MentorReviewsPage";
 import MentorEditProfilePage from "@/pages/MentorEditProfilePage";
 import MentorSessionsPage from "@/pages/MentorSessionsPage";
+import MentorAvailabilityPage from "@/pages/MentorAvailabilityPage";
 
 // Admin pages
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage";
@@ -41,6 +42,7 @@ import ManageSubjectsPage from "@/pages/admin/ManageSubjectsPage";
 import ManageMentorsPage from "@/pages/admin/ManageMentorsPage";
 import ManageBookingsPage from "@/pages/admin/ManageBookingsPage";
 import ManageStudentsPage from "@/pages/admin/ManageStudentsPage";
+import NotFoundPage from "@/pages/NotFoundPage";
 
 function App() {
   const { getToken } = useAuth();
@@ -55,6 +57,24 @@ function App() {
 
   return (
     <Routes>
+      {/* ── Auth routes (Clerk hosted pages) ──────────────────────── */}
+      <Route
+        path="sign-in/*"
+        element={
+          <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+            <SignIn routing="path" path="/sign-in" />
+          </div>
+        }
+      />
+      <Route
+        path="sign-up/*"
+        element={
+          <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+            <SignUp routing="path" path="/sign-up" />
+          </div>
+        }
+      />
+
       {/* ── Public routes (Navbar + Footer) ───────────────────────── */}
       <Route element={<PublicLayout />}>
         <Route index element={<Home />} />
@@ -85,8 +105,8 @@ function App() {
               }
             />
             <Route path="payment/:sessionId" element={<PaymentPage />} />
-            <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
             <Route path="sessions/open" element={<OpenGroupSessionsPage />} />
+            <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
           </Route>
 
           {/* ── Mentor layout routes ─────────────────────────────── */}
@@ -102,6 +122,7 @@ function App() {
             />
             <Route path="reviews" element={<MentorReviewsPage />} />
             <Route path="profile" element={<MentorEditProfilePage />} />
+            <Route path="availability" element={<MentorAvailabilityPage />} />
           </Route>
 
           {/* ── Admin routes ──────────────────────────────────────── */}
@@ -116,6 +137,9 @@ function App() {
           </Route>
         </Route>
       </Route>
+
+      {/* ── 404 catch-all ─────────────────────────────────────────── */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

@@ -4,11 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { CalendarCheck, Clock, User, Users } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function OpenGroupSessionsPage() {
-  const { data: sessions, isLoading } = useOpenGroupSessions();
+  const { data: sessions, isLoading, error } = useOpenGroupSessions();
   const joinMut = useJoinSession();
+  const navigate = useNavigate();
+
+  const handleJoin = (sessionId: number) => {
+    joinMut.mutate(sessionId, {
+      onSuccess: () => {
+        navigate(`/payment/${sessionId}`);
+      },
+    });
+  };
 
   return (
     <div className="py-16 bg-zinc-50 min-h-screen">
@@ -27,6 +36,14 @@ export default function OpenGroupSessionsPage() {
           <div className="flex justify-center py-16">
             <Spinner className="h-8 w-8 text-zinc-400" />
           </div>
+        ) : error ? (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <p className="text-red-500 text-sm">
+                Failed to load open sessions. Please try again later.
+              </p>
+            </CardContent>
+          </Card>
         ) : sessions && sessions.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {sessions.map((s) => (
@@ -85,7 +102,7 @@ export default function OpenGroupSessionsPage() {
                   <div className="flex gap-2 pt-2">
                     <Button
                       className="flex-1"
-                      onClick={() => joinMut.mutate(s.id)}
+                      onClick={() => handleJoin(s.id)}
                       disabled={joinMut.isPending}
                     >
                       {joinMut.isPending ? "Joining…" : "Join Session"}

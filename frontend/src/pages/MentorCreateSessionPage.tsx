@@ -5,6 +5,7 @@ import {
   useSubjects,
   useCreateSession,
 } from "@/hooks/use-queries";
+import { studentsApi } from "@/services/api";
 import { extractErrorMessage } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, CalendarCheck, UserCircle } from "lucide-react";
-import type { SessionType } from "@/types";
+import { AlertCircle, CalendarCheck, UserCircle, X } from "lucide-react";
+import type { SessionType, StudentDTO } from "@/types";
 import { PageSpinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 export default function MentorCreateSessionPage() {
   const navigate = useNavigate();
@@ -33,19 +35,45 @@ export default function MentorCreateSessionPage() {
 
   // ── Form state ───────────────────────────────────────────────────────
   const [subjectId, setSubjectId] = useState("");
-  const [sessionType, setSessionType] = useState<SessionType>("INDIVIDUAL");
   const [sessionAt, setSessionAt] = useState("");
   const [duration, setDuration] = useState("60");
   const [maxParticipants, setMaxParticipants] = useState("10");
 
-  const isGroup = sessionType === "GROUP";
+  // Student code lookup
+  const [studentCodeInput, setStudentCodeInput] = useState("");
+  const [addedStudents, setAddedStudents] = useState<StudentDTO[]>([]);
+  const [lookingUp, setLookingUp] = useState(false);
 
   const canSubmit =
     !!mentor &&
     !!subjectId &&
     !!sessionAt &&
     !!duration &&
-    (!isGroup || Number(maxParticipants) >= 2);
+    Number(maxParticipants) >= 2;
+
+  const handleAddStudent = async () => {
+    const code = studentCodeInput.trim();
+    if (!code) return;
+    if (addedStudents.some((s) => s.studentCode === code)) {
+      toast.error("Student already added.");
+      return;
+    }
+    setLookingUp(true);
+    try {
+      const student = await studentsApi.getByCode(code);
+      setAddedStudents((prev) => [...prev, student]);
+      setStudentCodeInput("");
+      toast.success(`Added ${student.firstName} ${student.lastName}`);
+    } catch {
+      toast.error("Student not found with that ID.");
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
+  const handleRemoveStudent = (studentId: number) => {
+    setAddedStudents((prev) => prev.filter((s) => s.id !== studentId));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,11 +83,11 @@ export default function MentorCreateSessionPage() {
       {
         mentorId: mentor.id,
         subjectId: Number(subjectId),
-        sessionType,
+        sessionType: "GROUP" as SessionType,
         sessionAt: new Date(sessionAt).toISOString(),
         durationMinutes: Number(duration),
-        studentIds: [],
-        maxParticipants: isGroup ? Number(maxParticipants) : 1,
+        studentIds: addedStudents.map((s) => s.id),
+        maxParticipants: Number(maxParticipants),
       },
       {
         onSuccess: () => navigate("/mentor/dashboard"),
@@ -90,9 +118,12 @@ export default function MentorCreateSessionPage() {
       <div className="mx-auto max-w-2xl px-6 space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Create Session</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">
+            Create Group Session
+          </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Schedule a new session and optionally assign students.
+            Schedule a new open group session for students to join. Individual
+            sessions are created when a student books you directly.
           </p>
         </div>
 
@@ -136,21 +167,14 @@ export default function MentorCreateSessionPage() {
 
               {/* Session Type */}
               <div className="space-y-1.5">
-                <Label>Session Type *</Label>
-                <Select
-                  value={sessionType}
-                  onValueChange={(v) => setSessionType(v as SessionType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="INDIVIDUAL">
-                      Individual (1-on-1)
-                    </SelectItem>
-                    <SelectItem value="GROUP">Group</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Session Type</Label>
+                <div className="text-sm text-zinc-600 bg-zinc-100 rounded-md px-3 py-2">
+                  Group Session
+                </div>
+                <p className="text-xs text-zinc-400">
+                  Individual sessions are created when students book you from
+                  your profile.
+                </p>
               </div>
 
               {/* Date & Time */}
@@ -182,22 +206,75 @@ export default function MentorCreateSessionPage() {
                 </Select>
               </div>
 
-              {/* Max participants — GROUP only */}
-              {isGroup && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="mp">Max Participants *</Label>
+              {/* Max participants */}
+              <div className="space-y-1.5">
+                <Label htmlFor="mp">Max Participants *</Label>
+                <Input
+                  id="mp"
+                  type="number"
+                  min={2}
+                  max={50}
+                  value={maxParticipants}
+                  onChange={(e) => setMaxParticipants(e.target.value)}
+                  className="w-32"
+                />
+                <p className="text-xs text-zinc-400">Between 2 and 50.</p>
+              </div>
+
+              {/* Invite students by ID */}
+              <div className="space-y-1.5">
+                <Label>Invite Students by ID (optional)</Label>
+                <p className="text-xs text-zinc-400">
+                  Add specific students by their Student ID. Leave empty to
+                  create an open session anyone can join.
+                </p>
+                <div className="flex gap-2">
                   <Input
-                    id="mp"
-                    type="number"
-                    min={2}
-                    max={50}
-                    value={maxParticipants}
-                    onChange={(e) => setMaxParticipants(e.target.value)}
-                    className="w-32"
+                    placeholder="e.g. STU-XXXXXX"
+                    value={studentCodeInput}
+                    onChange={(e) => setStudentCodeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddStudent();
+                      }
+                    }}
+                    className="flex-1"
                   />
-                  <p className="text-xs text-zinc-400">Between 2 and 50.</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddStudent}
+                    disabled={lookingUp || !studentCodeInput.trim()}
+                  >
+                    {lookingUp ? "Looking up…" : "Add"}
+                  </Button>
                 </div>
-              )}
+                {addedStudents.length > 0 && (
+                  <div className="space-y-1.5 mt-2">
+                    {addedStudents.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm"
+                      >
+                        <span>
+                          {s.firstName} {s.lastName}{" "}
+                          <span className="text-zinc-400 font-mono text-xs">
+                            ({s.studentCode})
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveStudent(s.id)}
+                          className="text-zinc-400 hover:text-red-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 

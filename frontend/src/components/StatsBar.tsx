@@ -1,11 +1,11 @@
 // components/StatsBar.tsx
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from "@/components/ui/card";
 
 const stats = [
-  { label: 'Expert Mentors', value: '500+' },
-  { label: 'Sessions Completed', value: '1.2k+' },
-  { label: 'Active Subjects', value: '50+' },
-  { label: 'Satisfaction Rate', value: '99%' },
+  { label: "Sri Lankan Mentors", value: "500+" },
+  { label: "Sessions Completed", value: "1.2k+" },
+  { label: "Subjects Offered", value: "50+" },
+  { label: "Student Satisfaction", value: "99%" },
 ];
 
 export default function StatsBar() {

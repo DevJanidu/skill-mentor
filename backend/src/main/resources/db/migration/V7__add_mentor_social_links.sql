@@ -1,0 +1,3 @@
+ALTER TABLE mentors
+    ADD COLUMN IF NOT EXISTS linkedin_url  VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS github_url    VARCHAR(255);

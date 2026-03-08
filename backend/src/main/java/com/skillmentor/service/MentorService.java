@@ -16,6 +16,6 @@ public interface MentorService {
     MentorDTO createMentor(CreateMentorDTO dto, String clerkId);
     MentorDTO updateMentor(Long id, UpdateMentorDTO dto);
     void deleteMentor(Long id);
-    MentorDTO uploadProfileImage(Long mentorId, MultipartFile file);
-    MentorDTO uploadCoverImage(Long mentorId, MultipartFile file);
+    MentorDTO uploadProfileImage(Long mentorId, MultipartFile file, String callerClerkId);
+    MentorDTO uploadCoverImage(Long mentorId, MultipartFile file, String callerClerkId);
 }

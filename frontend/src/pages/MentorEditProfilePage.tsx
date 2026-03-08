@@ -21,8 +21,10 @@ import { Camera, Star } from "lucide-react";
 const profileSchema = z.object({
   phoneNumber: z
     .string()
-    .min(7, "Phone number must be at least 7 characters")
-    .max(20, "Phone number too long"),
+    .regex(
+      /^(\+[1-9]\d{7,14}|0[7][0-9]{8})$/,
+      "Enter a valid phone number (e.g. 0712345678 or +447911123456)",
+    ),
   title: z.string().min(2, "Title is required").max(20, "Title too long"),
   profession: z
     .string()
@@ -35,6 +37,29 @@ const profileSchema = z.object({
     .min(0, "Cannot be negative")
     .max(50, "Must be ≤ 50"),
   bio: z.string().max(500, "Bio must be under 500 characters").optional(),
+  hourlyRate: z
+    .number()
+    .min(0.01, "Hourly rate must be greater than 0")
+    .max(100000, "Hourly rate too high"),
+  bankAccountName: z
+    .string()
+    .min(2, "Bank account name is required")
+    .max(100, "Too long"),
+  bankAccountNumber: z
+    .string()
+    .min(5, "Bank account number is required")
+    .max(30, "Too long"),
+  bankName: z.string().min(2, "Bank name is required").max(100, "Too long"),
+  linkedinUrl: z
+    .string()
+    .url("Enter a valid URL (e.g. https://linkedin.com/in/you)")
+    .or(z.literal(""))
+    .optional(),
+  githubUrl: z
+    .string()
+    .url("Enter a valid URL (e.g. https://github.com/you)")
+    .or(z.literal(""))
+    .optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -66,6 +91,12 @@ export default function MentorProfilePage() {
       company: "",
       experienceYears: 0,
       bio: "",
+      hourlyRate: 0,
+      bankAccountName: "",
+      bankAccountNumber: "",
+      bankName: "",
+      linkedinUrl: "",
+      githubUrl: "",
     },
   });
 
@@ -79,6 +110,12 @@ export default function MentorProfilePage() {
         company: mentor.company ?? "",
         experienceYears: mentor.experienceYears ?? 0,
         bio: mentor.bio ?? "",
+        hourlyRate: mentor.hourlyRate ?? 0,
+        bankAccountName: mentor.bankAccountName ?? "",
+        bankAccountNumber: mentor.bankAccountNumber ?? "",
+        bankName: mentor.bankName ?? "",
+        linkedinUrl: mentor.linkedinUrl ?? "",
+        githubUrl: mentor.githubUrl ?? "",
       });
     }
   }, [mentor, reset]);
@@ -281,7 +318,7 @@ export default function MentorProfilePage() {
               <Field label="Phone Number" error={errors.phoneNumber?.message}>
                 <Input
                   {...register("phoneNumber")}
-                  placeholder="+94 7X XXX XXXX"
+                  placeholder="07XX XXX XXXX"
                   autoComplete="tel"
                 />
               </Field>
@@ -316,6 +353,104 @@ export default function MentorProfilePage() {
                 className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-1 resize-none"
               />
             </Field>
+
+            {/* Pricing & Bank Details */}
+            <div className="pt-2">
+              <h3 className="text-sm font-semibold text-zinc-800 mb-3">
+                Pricing & Bank Details
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field
+                  label="Hourly Rate (LKR)"
+                  error={errors.hourlyRate?.message}
+                >
+                  <Input
+                    {...register("hourlyRate", { valueAsNumber: true })}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="1500.00"
+                  />
+                </Field>
+                <Field label="Bank Name" error={errors.bankName?.message}>
+                  <Input
+                    {...register("bankName")}
+                    placeholder="e.g. Bank of Ceylon"
+                  />
+                </Field>
+                <Field
+                  label="Account Holder Name"
+                  error={errors.bankAccountName?.message}
+                >
+                  <Input
+                    {...register("bankAccountName")}
+                    placeholder="Full name on bank account"
+                  />
+                </Field>
+                <Field
+                  label="Account Number"
+                  error={errors.bankAccountNumber?.message}
+                >
+                  <Input
+                    {...register("bankAccountNumber")}
+                    placeholder="0123456789"
+                  />
+                </Field>
+              </div>
+            </div>
+
+            {/* Social Profiles */}
+            <div className="pt-2">
+              <h3 className="text-sm font-semibold text-zinc-800 mb-3">
+                Social Profiles
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field
+                  label="LinkedIn"
+                  error={errors.linkedinUrl?.message}
+                  optional
+                >
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 fill-[#0A66C2]"
+                        aria-hidden="true"
+                      >
+                        <path d="M20.447 20.452H17.21v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.984V9h3.102v1.561h.043c.432-.82 1.489-1.685 3.065-1.685 3.276 0 3.881 2.156 3.881 4.959v6.617zM5.337 7.433a1.8 1.8 0 1 1 0-3.601 1.8 1.8 0 0 1 0 3.601zm1.558 13.019H3.779V9h3.116v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                      </svg>
+                    </span>
+                    <Input
+                      {...register("linkedinUrl")}
+                      className="pl-9"
+                      placeholder="https://linkedin.com/in/yourname"
+                    />
+                  </div>
+                </Field>
+                <Field
+                  label="GitHub"
+                  error={errors.githubUrl?.message}
+                  optional
+                >
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 fill-zinc-900"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                      </svg>
+                    </span>
+                    <Input
+                      {...register("githubUrl")}
+                      className="pl-9"
+                      placeholder="https://github.com/yourname"
+                    />
+                  </div>
+                </Field>
+              </div>
+            </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               {!isCreateMode && isDirty && (

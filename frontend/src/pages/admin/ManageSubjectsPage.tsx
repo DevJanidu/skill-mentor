@@ -45,11 +45,15 @@ export default function ManageSubjectsPage() {
   // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [mentorId, setMentorId] = useState<string>("");
 
   const resetForm = () => {
     setName("");
     setDescription("");
+    setCategory("");
+    setThumbnailUrl("");
     setMentorId("");
     setEditingSubject(null);
   };
@@ -63,6 +67,8 @@ export default function ManageSubjectsPage() {
     setEditingSubject(s);
     setName(s.subjectName);
     setDescription(s.description ?? "");
+    setCategory(s.category ?? "");
+    setThumbnailUrl(s.thumbnailUrl ?? "");
     setMentorId(String(s.mentorId));
     setDialogOpen(true);
   };
@@ -72,7 +78,12 @@ export default function ManageSubjectsPage() {
       updateMut.mutate(
         {
           id: editingSubject.id,
-          data: { name, description: description || undefined },
+          data: {
+            name,
+            description: description || undefined,
+            category: category || undefined,
+            thumbnailUrl: thumbnailUrl || undefined,
+          },
         },
         {
           onSuccess: () => {
@@ -86,6 +97,8 @@ export default function ManageSubjectsPage() {
         {
           name,
           description: description || undefined,
+          category: category || undefined,
+          thumbnailUrl: thumbnailUrl || undefined,
           mentorId: Number(mentorId),
         },
         {
@@ -158,6 +171,24 @@ export default function ManageSubjectsPage() {
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cat">Category</Label>
+                <Input
+                  id="cat"
+                  placeholder="e.g. Programming, Design, Marketing"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="thumb">Thumbnail URL</Label>
+                <Input
+                  id="thumb"
+                  placeholder="https://example.com/image.jpg"
+                  value={thumbnailUrl}
+                  onChange={(e) => setThumbnailUrl(e.target.value)}
                 />
               </div>
               {!editingSubject && (

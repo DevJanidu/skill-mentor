@@ -13,6 +13,7 @@ public interface StudentService {
 
     List<StudentDTO> getAllStudents();
     StudentDTO getStudentById(Long id);
+    StudentDTO getStudentByCode(String studentCode);
     StudentDTO createStudent(CreateStudentDTO dto,String clerkId);
     StudentDTO updateStudent(UpdateStudentDTO dto, Long id);
     void deleteStudent(Long id);

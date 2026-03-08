@@ -56,7 +56,7 @@ public class SessionServiceImpl implements SessionService {
     @Cacheable(value = "sessionDetails", key = "#id")
     @Override
     @Transactional(readOnly = true)
-    public SessionDTO getSessionById(Long id) {
+    public SessionDTO getSessionById(Long id, String callerClerkId) {
         log.debug("Fetching session with id {} [cache miss]", id);
 
         Session session = sessionRepository.findById(id)
@@ -64,6 +64,25 @@ public class SessionServiceImpl implements SessionService {
                         "Session not found with id " + id,
                         HttpStatus.NOT_FOUND
                 ));
+
+        // Access control: admin, owning mentor, or enrolled student
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            boolean isMentorOwner = session.getMentor() != null
+                    && session.getMentor().getUser() != null
+                    && callerClerkId.equals(session.getMentor().getUser().getClerkId());
+
+            boolean isEnrolledStudent = session.getStudents().stream()
+                    .anyMatch(s -> s.getUser() != null && callerClerkId.equals(s.getUser().getClerkId()));
+
+            if (!isMentorOwner && !isEnrolledStudent) {
+                throw new SkillMentorException(
+                        "You do not have access to this session", HttpStatus.FORBIDDEN);
+            }
+        }
 
         return SessionMapper.toDTO(session);
     }

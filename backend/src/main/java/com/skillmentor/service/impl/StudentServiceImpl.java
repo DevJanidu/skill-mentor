@@ -55,6 +55,18 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public StudentDTO getStudentByCode(String studentCode) {
+        log.debug("Fetching student with code {}", studentCode);
+        Student student = studentRepository.findByStudentCode(studentCode)
+                .orElseThrow(() -> new SkillMentorException(
+                        "Student not found with code " + studentCode,
+                        HttpStatus.NOT_FOUND
+                ));
+        return StudentMapper.toDTO(student);
+    }
+
+    @Override
     @Transactional
     public StudentDTO createStudent(CreateStudentDTO dto,String clerkId) {
         log.debug("Creating new student with id {}",clerkId);

@@ -117,6 +117,7 @@ export default function MentorSubjectsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createDesc, setCreateDesc] = useState("");
+  const [createCategory, setCreateCategory] = useState("");
   const [createThumb, setCreateThumb] = useState<File | null>(null);
 
   const handleCreate = () => {
@@ -125,6 +126,7 @@ export default function MentorSubjectsPage() {
       {
         name: createName.trim(),
         description: createDesc.trim() || undefined,
+        category: createCategory.trim() || undefined,
         mentorId: mentor.id,
       },
       {
@@ -135,6 +137,7 @@ export default function MentorSubjectsPage() {
           setCreateOpen(false);
           setCreateName("");
           setCreateDesc("");
+          setCreateCategory("");
           setCreateThumb(null);
         },
       },
@@ -145,12 +148,14 @@ export default function MentorSubjectsPage() {
   const [editSubject, setEditSubject] = useState<SubjectDTO | null>(null);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
+  const [editCategory, setEditCategory] = useState("");
   const [editThumb, setEditThumb] = useState<File | null>(null);
 
   const openEdit = (s: SubjectDTO) => {
     setEditSubject(s);
     setEditName(s.subjectName);
     setEditDesc(s.description ?? "");
+    setEditCategory(s.category ?? "");
     setEditThumb(null);
   };
 
@@ -162,6 +167,7 @@ export default function MentorSubjectsPage() {
         data: {
           name: editName.trim(),
           description: editDesc.trim() || undefined,
+          category: editCategory.trim() || undefined,
         },
       },
       {
@@ -366,6 +372,15 @@ export default function MentorSubjectsPage() {
                 onChange={(e) => setCreateDesc(e.target.value)}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cc">Category</Label>
+              <Input
+                id="cc"
+                placeholder="e.g. Programming, Design, Marketing"
+                value={createCategory}
+                onChange={(e) => setCreateCategory(e.target.value)}
+              />
+            </div>
             <ThumbnailPicker value={createThumb} onChange={setCreateThumb} />
           </div>
           <DialogFooter className="shrink-0 mt-2">
@@ -412,6 +427,15 @@ export default function MentorSubjectsPage() {
                 className="resize-none"
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ec">Category</Label>
+              <Input
+                id="ec"
+                placeholder="e.g. Programming, Design, Marketing"
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value)}
               />
             </div>
             <ThumbnailPicker

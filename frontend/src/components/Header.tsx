@@ -10,14 +10,18 @@ function Header() {
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-12 md:py-20 md:grid-cols-2">
         {/* LEFT CONTENT */}
         <div className="text-center md:text-left mt-20">
+          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-zinc-500 bg-zinc-100 rounded-full px-4 py-1.5 mb-4">
+            🇱🇰 Built for Sri Lankan Students
+          </span>
           <h1 className="text-4xl font-bold leading-tight text-zinc-900 md:text-5xl lg:text-6xl">
-            Learn Smarter with{" "}
-            <span className="text-zinc-600">Skill Mentor</span>
+            Learn from the Best{" "}
+            <span className="text-zinc-600">Local Mentors</span>
           </h1>
 
           <p className="mt-6 mx-auto md:mx-0 max-w-xl text-lg text-zinc-600">
-            Skill Mentor helps students choose their preferred subjects, join
-            expert-led learning sessions, and grow their skills with confidence.
+            Sri Lanka's first dedicated mentoring platform — connecting
+            university students with experienced professionals for 1-on-1 and
+            group learning sessions in your own language and time zone.
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-4">
@@ -26,20 +30,19 @@ function Header() {
                 Explore Subjects
               </Button>
             </Link>
-            <Link to="/subjects">
+            <Link to="/mentors">
               <Button
                 variant="outline"
                 className="px-6 py-5 text-base w-full sm:w-auto"
               >
-                Join a Session
+                Find a Mentor
               </Button>
             </Link>
           </div>
         </div>
 
         {/* RIGHT IMAGES */}
-        {/* Increased height to h-[450px] so the lower images have room */}
-        <div className="relative flex justify-center h-[420px] md:h-[550px] mt-10 md:mt-20">
+        <div className="relative flex justify-center h-105 md:h-137.5 mt-10 md:mt-20">
           {/* Image 1 (Center - Stays at top) */}
           <div className="relative z-10">
             <img

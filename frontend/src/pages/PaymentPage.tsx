@@ -1,5 +1,5 @@
-import { useParams, Link } from "react-router-dom";
-import { useSession, useSubmitReceipt } from "@/hooks/use-queries";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useSession, useSubmitReceipt, useMentor } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,9 @@ import {
   CalendarCheck,
   CheckCircle2,
   Clock,
+  Copy,
   ImageIcon,
+  Landmark,
   Upload,
   User,
   X,
@@ -19,11 +21,45 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { uploadFile } from "@/lib/upload";
 
+/* ── reusable bank-detail row ─────────────────────── */
+function BankRow({
+  label,
+  value,
+  copyable,
+}: {
+  label: string;
+  value: string;
+  copyable?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-zinc-500">{label}</span>
+      <span className="flex items-center gap-1.5 font-medium text-zinc-900">
+        {value}
+        {copyable && (
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(value);
+              toast.success(`${label} copied!`);
+            }}
+            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </span>
+    </div>
+  );
+}
+
 export default function PaymentPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const id = Number(sessionId);
   const { data: session, isLoading } = useSession(id);
+  const { data: mentor } = useMentor(session?.mentorId ?? 0);
   const submitReceipt = useSubmitReceipt();
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -145,6 +181,78 @@ export default function PaymentPage() {
               </CardContent>
             </Card>
 
+            {/* Pricing & Bank Details */}
+            {mentor && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Landmark className="h-5 w-5" /> Payment Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {mentor.hourlyRate != null && (
+                    <>
+                      <div className="grid grid-cols-2 gap-y-2 text-sm">
+                        <span className="text-zinc-500">Hourly Rate</span>
+                        <span className="font-medium text-zinc-900">
+                          LKR {Number(mentor.hourlyRate).toLocaleString()}
+                        </span>
+                        <span className="text-zinc-500">Duration</span>
+                        <span className="font-medium text-zinc-900">
+                          {session?.durationMinutes} min
+                        </span>
+                      </div>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-zinc-700">
+                          Total Amount
+                        </span>
+                        <span className="text-lg font-bold text-zinc-900">
+                          LKR{" "}
+                          {(
+                            (Number(mentor.hourlyRate) *
+                              (session?.durationMinutes ?? 60)) /
+                            60
+                          ).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+
+                  {mentor.bankName && (
+                    <div className="space-y-2 text-sm">
+                      <BankRow label="Bank" value={mentor.bankName} />
+                      <BankRow
+                        label="Account Name"
+                        value={mentor.bankAccountName ?? ""}
+                      />
+                      <BankRow
+                        label="Account Number"
+                        value={mentor.bankAccountNumber ?? ""}
+                        copyable
+                      />
+                      <BankRow
+                        label="Payment Reference"
+                        value={`SM-${session?.id}`}
+                        copyable
+                      />
+                    </div>
+                  )}
+
+                  {!mentor.bankName && (
+                    <p className="text-sm text-zinc-400">
+                      Mentor has not provided bank details yet. Please contact
+                      them directly.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Upload */}
             <Card>
               <CardHeader>
@@ -161,11 +269,13 @@ export default function PaymentPage() {
                       Your mentor will review your receipt and confirm the
                       session.
                     </p>
-                    <Link to="/dashboard">
-                      <Button variant="outline" className="mt-4">
-                        Back to Dashboard
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => navigate(`/sessions/${session.id}`)}
+                    >
+                      View Session Details
+                    </Button>
                   </div>
                 ) : (
                   <>

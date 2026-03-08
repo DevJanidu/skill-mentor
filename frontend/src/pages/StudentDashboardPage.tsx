@@ -187,6 +187,23 @@ export default function StudentDashboardPage() {
                 {user?.fullName ?? user?.firstName ?? "there"}
               </h1>
               <p className="text-sm text-zinc-500">Student</p>
+              {student?.studentCode && (
+                <div className="mt-1 flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs font-mono">
+                    ID: {student.studentCode}
+                  </Badge>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(student.studentCode);
+                      toast.success("Student ID copied!");
+                    }}
+                    className="text-zinc-400 hover:text-zinc-600 text-xs underline"
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ package com.skillmentor.dto.mentor;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -26,8 +27,14 @@ public class MentorDTO {
     private String bio;
     private String profileImageUrl;
     private String coverImageUrl;
+    private BigDecimal hourlyRate;
+    private String bankAccountName;
+    private String bankAccountNumber;
+    private String bankName;
     private Double averageRating;
     private Integer totalReviews;
+    private String linkedinUrl;
+    private String githubUrl;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

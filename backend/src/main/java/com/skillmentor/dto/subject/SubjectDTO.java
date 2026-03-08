@@ -25,6 +25,7 @@ public class SubjectDTO {
 
     private double averageRating;
     private int totalReviews;
+    private int enrollmentCount;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

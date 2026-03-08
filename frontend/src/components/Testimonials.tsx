@@ -1,42 +1,42 @@
-import { Marquee } from '@/components/ui/Marquee'; // Adjust path based on your setup
-import { cn } from '@/lib/utils';
+import { Marquee } from "@/components/ui/Marquee"; // Adjust path based on your setup
+import { cn } from "@/lib/utils";
 
 const reviews = [
   {
-    name: 'Arjun Silva',
-    username: 'Data Science Student',
-    body: 'Finding a mentor who actually works at a top tech company changed everything for my career path.',
-    img: 'https://avatar.vercel.sh/arjun',
+    name: "Kasun Perera",
+    username: "UOM · Computer Science Student",
+    body: "My mentor helped me understand data structures in a way no lecture ever did. Landed my first internship within weeks!",
+    img: "https://avatar.vercel.sh/kasun",
   },
   {
-    name: 'Sarah Chen',
-    username: 'Senior UI Designer',
-    body: 'I love mentoring here. The platform makes it so easy to schedule sessions and share my design knowledge.',
-    img: 'https://avatar.vercel.sh/sarah',
+    name: "Dilshan Rathnayake",
+    username: "Software Engineer · Mentor",
+    body: "Mentoring students from SLIIT and UOP has been incredibly rewarding. The platform handles all the scheduling for me.",
+    img: "https://avatar.vercel.sh/dilshan",
   },
   {
-    name: 'David Kumar',
-    username: 'Fullstack Learner',
-    body: 'The group sessions are incredibly affordable and the quality of teaching is better than most bootcamps.',
-    img: 'https://avatar.vercel.sh/david',
+    name: "Sanduni Fernando",
+    username: "UOC · IT Undergraduate",
+    body: "Group sessions are so affordable — I split the cost with three classmates and we all improved together.",
+    img: "https://avatar.vercel.sh/sanduni",
   },
   {
-    name: 'Jessica Taylor',
-    username: 'Python Mentor',
-    body: "Skill Mentor has a great community of eager students. It's rewarding to see them land their first jobs.",
-    img: 'https://avatar.vercel.sh/jessica',
+    name: "Ishara Wickramasinghe",
+    username: "Data Engineer · Mentor",
+    body: "I teach in Sinhala and English. Students from rural areas finally get access to industry-level guidance.",
+    img: "https://avatar.vercel.sh/ishara",
   },
   {
-    name: 'Malith Perera',
-    username: 'DevOps Student',
-    body: 'Finally, a platform that connects me with experts in Sri Lanka and abroad. Highly recommended!',
-    img: 'https://avatar.vercel.sh/malith',
+    name: "Malith Jayasinghe",
+    username: "NSBM · DevOps Student",
+    body: "Found a mentor who works at a leading Sri Lankan tech firm. His real-world advice is priceless.",
+    img: "https://avatar.vercel.sh/malith",
   },
   {
-    name: 'Emily Watson',
-    username: 'Marketing Lead',
-    body: 'The session notes and recording features help me keep track of everything I learn from my mentor.',
-    img: 'https://avatar.vercel.sh/emily',
+    name: "Nethmi Gunawardena",
+    username: "USJ · Business Management Student",
+    body: "Skill Mentor made it easy to connect with a marketing professional who actually understands the local industry.",
+    img: "https://avatar.vercel.sh/nethmi",
   },
 ];
 
@@ -57,15 +57,17 @@ const ReviewCard = ({
   return (
     <figure
       className={cn(
-        'relative w-80 shrink-0 cursor-pointer overflow-hidden rounded-xl border p-6',
-        'border-zinc-950/[.1] bg-zinc-950/[.01] hover:bg-zinc-950/[.05]',
-        'dark:border-zinc-50/[.1] dark:bg-zinc-50/[.10] dark:hover:bg-zinc-50/[.15]'
+        "relative w-80 shrink-0 cursor-pointer overflow-hidden rounded-xl border p-6",
+        "border-zinc-950/10 bg-zinc-950/1 hover:bg-zinc-950/5",
+        "dark:border-zinc-50/10 dark:bg-zinc-50/10 dark:hover:bg-zinc-50/15",
       )}
     >
       <div className="flex flex-row items-center gap-3">
         <img className="rounded-full" width="40" height="40" alt="" src={img} />
         <div className="flex flex-col">
-          <figcaption className="text-sm font-bold text-zinc-900 leading-none">{name}</figcaption>
+          <figcaption className="text-sm font-bold text-zinc-900 leading-none">
+            {name}
+          </figcaption>
           <p className="text-xs font-medium text-zinc-500 mt-1">{username}</p>
         </div>
       </div>
@@ -81,28 +83,29 @@ export default function Testimonials() {
     <section className="py-20 bg-white overflow-hidden">
       <div className="mx-auto max-w-7xl px-6 mb-12 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-          Loved by Students and Mentors
+          Loved by Sri Lankan Students &amp; Mentors
         </h2>
         <p className="mt-4 text-lg text-zinc-600">
-          Join a growing community of learners and industry experts.
+          Join a growing community of university students and local industry
+          professionals.
         </p>
       </div>
 
       <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
         <Marquee pauseOnHover className="[--duration:30s]">
-          {firstRow.map(review => (
+          {firstRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
           ))}
         </Marquee>
         <Marquee reverse pauseOnHover className="[--duration:35s] mt-4">
-          {secondRow.map(review => (
+          {secondRow.map((review) => (
             <ReviewCard key={review.username} {...review} />
           ))}
         </Marquee>
 
         {/* Improved Gradients to match Zinc/White theme */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white"></div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-white"></div>
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-linear-to-r from-white"></div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-linear-to-l from-white"></div>
       </div>
     </section>
   );

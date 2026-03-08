@@ -6,10 +6,12 @@ import type {
   ApproveSessionDTO,
   BookSessionDTO,
   CompleteSessionDTO,
+  CreateMentorAvailabilityDTO,
   CreateMentorDTO,
   CreateSessionDTO,
   CreateStudentDTO,
   CreateSubjectDTO,
+  MentorAvailabilityDTO,
   MentorDTO,
   MyRolesResponse,
   OnboardingRequest,
@@ -104,6 +106,10 @@ export const studentsApi = {
   getAll: () => api.get<StudentDTO[]>("/api/students").then((r) => r.data),
   getById: (id: number) =>
     api.get<StudentDTO>(`/api/students/${id}`).then((r) => r.data),
+  getByCode: (code: string) =>
+    api
+      .get<StudentDTO>(`/api/students/by-code/${encodeURIComponent(code)}`)
+      .then((r) => r.data),
   getSessions: (id: number) =>
     api.get<SessionDTO[]>(`/api/students/${id}/sessions`).then((r) => r.data),
   create: (data: CreateStudentDTO) =>
@@ -234,5 +240,24 @@ export const sessionsApi = {
   updateResources: (id: number, data: UpdateSessionResourcesDTO) =>
     api
       .patch<SessionDTO>(`/api/sessions/${id}/resources`, data)
+      .then((r) => r.data),
+};
+
+/* ── Mentor Availability ───────────────────────────────────────────────── */
+
+export const mentorAvailabilityApi = {
+  get: (mentorId: number) =>
+    api
+      .get<MentorAvailabilityDTO[]>(`/api/mentors/${mentorId}/availability`)
+      .then((r) => r.data),
+  set: (mentorId: number, slots: CreateMentorAvailabilityDTO[]) =>
+    api
+      .put<
+        MentorAvailabilityDTO[]
+      >(`/api/mentors/${mentorId}/availability`, slots)
+      .then((r) => r.data),
+  deleteSlot: (mentorId: number, slotId: number) =>
+    api
+      .delete<void>(`/api/mentors/${mentorId}/availability/${slotId}`)
       .then((r) => r.data),
 };

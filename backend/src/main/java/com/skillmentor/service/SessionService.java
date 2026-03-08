@@ -8,7 +8,7 @@ public interface SessionService {
 
     // sessions crud related
     List<SessionDTO> getAllSessions();
-    SessionDTO getSessionById(Long id);
+    SessionDTO getSessionById(Long id, String callerClerkId);
     SessionDTO createSession(CreateSessionDTO dto);
     SessionDTO updateSessionDto(Long id, UpdateSessionDTO dto);
     void deleteSession(Long id);

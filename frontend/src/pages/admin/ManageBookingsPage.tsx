@@ -3,6 +3,8 @@ import {
   useSessions,
   useUpdateSession,
   useDeleteSession,
+  useApproveSession,
+  useCompleteSession,
 } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +27,18 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, Link2, Pencil, Trash2 } from "lucide-react";
-import type { SessionDTO, SessionStatus } from "@/types";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Link2,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import type { SessionDTO, SessionStatus, ReceiptStatus } from "@/types";
+
+const PAGE_SIZE = 15;
 
 const STATUS_OPTIONS: SessionStatus[] = [
   "PENDING",
@@ -44,13 +56,25 @@ const statusColor: Record<SessionStatus, string> = {
   CANCELED: "bg-red-50 text-red-700",
 };
 
+const receiptColor: Record<ReceiptStatus, string> = {
+  NONE: "bg-zinc-100 text-zinc-500",
+  SUBMITTED: "bg-yellow-50 text-yellow-700",
+  APPROVED: "bg-green-50 text-green-700",
+  REJECTED: "bg-red-50 text-red-700",
+};
+
 export default function ManageBookingsPage() {
   const { data: sessions, isLoading } = useSessions();
   const updateMut = useUpdateSession();
   const deleteMut = useDeleteSession();
+  const approveMut = useApproveSession();
+  const completeMut = useCompleteSession();
 
   const [tab, setTab] = useState("ALL");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
   const [editingSession, setEditingSession] = useState<SessionDTO | null>(null);
 
   // Edit form
@@ -85,94 +109,48 @@ export default function ManageBookingsPage() {
     if (window.confirm("Delete this booking?")) deleteMut.mutate(id);
   };
 
+  const handleConfirmPayment = (s: SessionDTO) => {
+    if (window.confirm(`Confirm payment receipt for booking #${s.id}?`)) {
+      approveMut.mutate({
+        id: s.id,
+        data: { meetingLink: s.meetingLink ?? "" },
+      });
+    }
+  };
+
+  const handleMarkComplete = (s: SessionDTO) => {
+    if (window.confirm(`Mark booking #${s.id} as completed?`)) {
+      completeMut.mutate({ id: s.id });
+    }
+  };
+
+  const q = search.toLowerCase();
   const filtered = sessions
     ?.filter((s) => tab === "ALL" || s.sessionStatus === tab)
-    .filter(
-      (s) =>
-        s.mentorName.toLowerCase().includes(search.toLowerCase()) ||
-        s.subjectName.toLowerCase().includes(search.toLowerCase()) ||
-        String(s.id).includes(search),
-    );
+    .filter((s) => {
+      if (!q) return true;
+      return (
+        s.mentorName.toLowerCase().includes(q) ||
+        s.subjectName.toLowerCase().includes(q) ||
+        (s.studentName ?? "").toLowerCase().includes(q) ||
+        String(s.id).includes(q)
+      );
+    })
+    .filter((s) => {
+      if (!dateFrom && !dateTo) return true;
+      const d = new Date(s.sessionAt);
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo && d > new Date(dateTo + "T23:59:59")) return false;
+      return true;
+    });
 
-  const SessionTable = ({ items }: { items: SessionDTO[] }) => (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-zinc-500">
-            <th className="pb-3 font-medium">ID</th>
-            <th className="pb-3 font-medium">Mentor</th>
-            <th className="pb-3 font-medium">Subject</th>
-            <th className="pb-3 font-medium">Type</th>
-            <th className="pb-3 font-medium">Status</th>
-            <th className="pb-3 font-medium">Date</th>
-            <th className="pb-3 font-medium">Duration</th>
-            <th className="pb-3 font-medium">Link</th>
-            <th className="pb-3 font-medium text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {items.map((s) => (
-            <tr key={s.id} className="text-zinc-700">
-              <td className="py-3">#{s.id}</td>
-              <td className="py-3">{s.mentorName}</td>
-              <td className="py-3">{s.subjectName}</td>
-              <td className="py-3">{s.sessionType}</td>
-              <td className="py-3">
-                <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[s.sessionStatus]}`}
-                >
-                  {s.sessionStatus}
-                </span>
-              </td>
-              <td className="py-3 whitespace-nowrap">
-                {new Date(s.sessionAt).toLocaleDateString()}{" "}
-                <span className="text-zinc-400">
-                  {new Date(s.sessionAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </td>
-              <td className="py-3">{s.durationMinutes}m</td>
-              <td className="py-3">
-                {s.meetingLink ? (
-                  <a
-                    href={s.meetingLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline inline-flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" /> Open
-                  </a>
-                ) : (
-                  <span className="text-zinc-400">—</span>
-                )}
-              </td>
-              <td className="py-3 text-right">
-                <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEdit(s)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(s.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+  const totalPages = Math.max(
+    1,
+    Math.ceil((filtered?.length ?? 0) / PAGE_SIZE),
   );
+  const paginated = filtered?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const resetPage = () => setPage(1);
 
   return (
     <div className="space-y-6">
@@ -183,16 +161,60 @@ export default function ManageBookingsPage() {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <Input
-          placeholder="Search by mentor, subject or ID…"
+          placeholder="Search by mentor, student, subject or ID…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
+          onChange={(e) => {
+            setSearch(e.target.value);
+            resetPage();
+          }}
+          className="max-w-xs"
         />
+        <div className="flex items-center gap-2">
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => {
+              setDateFrom(e.target.value);
+              resetPage();
+            }}
+            className="w-40"
+          />
+          <span className="text-zinc-400 text-sm">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => {
+              setDateTo(e.target.value);
+              resetPage();
+            }}
+            className="w-40"
+          />
+          {(dateFrom || dateTo) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+                resetPage();
+              }}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v);
+          resetPage();
+        }}
+      >
         <TabsList>
           <TabsTrigger value="ALL">All</TabsTrigger>
           {STATUS_OPTIONS.map((st) => (
@@ -216,9 +238,160 @@ export default function ManageBookingsPage() {
                 <div className="flex justify-center py-8">
                   <Spinner className="h-6 w-6 text-zinc-400" />
                 </div>
-              ) : filtered && filtered.length > 0 ? (
-                // eslint-disable-next-line react-hooks/static-components
-                <SessionTable items={filtered} />
+              ) : paginated && paginated.length > 0 ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-zinc-500">
+                          <th className="pb-3 font-medium">ID</th>
+                          <th className="pb-3 font-medium">Student</th>
+                          <th className="pb-3 font-medium">Mentor</th>
+                          <th className="pb-3 font-medium">Subject</th>
+                          <th className="pb-3 font-medium">Type</th>
+                          <th className="pb-3 font-medium">Status</th>
+                          <th className="pb-3 font-medium">Payment</th>
+                          <th className="pb-3 font-medium">Date</th>
+                          <th className="pb-3 font-medium">Duration</th>
+                          <th className="pb-3 font-medium">Link</th>
+                          <th className="pb-3 font-medium text-right">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {paginated.map((s) => (
+                          <tr key={s.id} className="text-zinc-700">
+                            <td className="py-3">#{s.id}</td>
+                            <td className="py-3 max-w-30 truncate">
+                              {s.studentName ??
+                                s.studentNames?.join(", ") ??
+                                "—"}
+                            </td>
+                            <td className="py-3">{s.mentorName}</td>
+                            <td className="py-3">{s.subjectName}</td>
+                            <td className="py-3">{s.sessionType}</td>
+                            <td className="py-3">
+                              <span
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[s.sessionStatus]}`}
+                              >
+                                {s.sessionStatus}
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <span
+                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${receiptColor[s.receiptStatus ?? "NONE"]}`}
+                              >
+                                {s.receiptStatus ?? "NONE"}
+                              </span>
+                            </td>
+                            <td className="py-3 whitespace-nowrap">
+                              {new Date(s.sessionAt).toLocaleDateString()}{" "}
+                              <span className="text-zinc-400">
+                                {new Date(s.sessionAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </td>
+                            <td className="py-3">{s.durationMinutes}m</td>
+                            <td className="py-3">
+                              {s.meetingLink ? (
+                                <a
+                                  href={s.meetingLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> Open
+                                </a>
+                              ) : (
+                                <span className="text-zinc-400">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 text-right">
+                              <div className="flex justify-end gap-1">
+                                {s.receiptStatus === "SUBMITTED" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs text-green-700 hover:text-green-800 hover:bg-green-50"
+                                    disabled={approveMut.isPending}
+                                    onClick={() => handleConfirmPayment(s)}
+                                    title="Confirm Payment Receipt"
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                                    Confirm
+                                  </Button>
+                                )}
+                                {(s.sessionStatus === "SCHEDULED" ||
+                                  s.sessionStatus === "STARTED") && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs text-indigo-700 hover:text-indigo-800 hover:bg-indigo-50"
+                                    disabled={completeMut.isPending}
+                                    onClick={() => handleMarkComplete(s)}
+                                    title="Mark as Completed"
+                                  >
+                                    Complete
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openEdit(s)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(s.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t pt-4 mt-4">
+                      <p className="text-xs text-zinc-500">
+                        Showing {(page - 1) * PAGE_SIZE + 1}–
+                        {Math.min(page * PAGE_SIZE, filtered?.length ?? 0)} of{" "}
+                        {filtered?.length ?? 0}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page === 1}
+                          onClick={() => setPage((p) => p - 1)}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs font-medium text-zinc-600">
+                          {page} / {totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={page >= totalPages}
+                          onClick={() => setPage((p) => p + 1)}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-sm text-zinc-500 py-6 text-center">
                   No bookings found.

@@ -40,9 +40,10 @@ public class SessionController extends AbstractController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")
     public ResponseEntity<SessionDTO> getSessionById(
-            @PathVariable @Min(value = 1, message = "Session ID must be positive") Long id
+            @PathVariable @Min(value = 1, message = "Session ID must be positive") Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        return sendOkResponse(sessionService.getSessionById(id));
+        return sendOkResponse(sessionService.getSessionById(id, userPrincipal.getId()));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','MENTOR')")
@@ -175,7 +176,7 @@ public class SessionController extends AbstractController {
     // ═════════════════════════════════════════════════════════════════════
 
     /** List open GROUP sessions with available seats. */
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/open")
     public ResponseEntity<List<SessionDTO>> getOpenGroupSessions() {
         return sendOkResponse(sessionService.getOpenGroupSessions());

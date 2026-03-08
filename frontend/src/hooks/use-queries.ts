@@ -10,11 +10,13 @@ import {
   sessionsApi,
   usersApi,
   onboardingApi,
+  mentorAvailabilityApi,
 } from "@/services/api";
 import type {
   ApproveSessionDTO,
   BookSessionDTO,
   CompleteSessionDTO,
+  CreateMentorAvailabilityDTO,
   CreateMentorDTO,
   CreateSessionDTO,
   CreateStudentDTO,
@@ -558,6 +560,33 @@ export const useUpdateSessionResources = () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
       qc.invalidateQueries({ queryKey: ["sessions", id] });
       toast.success("Resources saved!");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e)),
+  });
+};
+
+/* ── Mentor Availability ───────────────────────────────────────────────── */
+
+export const useMentorAvailability = (mentorId: number) =>
+  useQuery({
+    queryKey: ["mentorAvailability", mentorId],
+    queryFn: () => mentorAvailabilityApi.get(mentorId),
+    enabled: !!mentorId,
+  });
+
+export const useSetMentorAvailability = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      mentorId,
+      slots,
+    }: {
+      mentorId: number;
+      slots: CreateMentorAvailabilityDTO[];
+    }) => mentorAvailabilityApi.set(mentorId, slots),
+    onSuccess: (_, { mentorId }) => {
+      qc.invalidateQueries({ queryKey: ["mentorAvailability", mentorId] });
+      toast.success("Availability saved!");
     },
     onError: (e) => toast.error(extractErrorMessage(e)),
   });

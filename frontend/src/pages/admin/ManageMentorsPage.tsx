@@ -30,6 +30,12 @@ const empty: CreateMentorDTO = {
   company: "",
   experienceYears: 0,
   bio: "",
+  hourlyRate: 0,
+  bankAccountName: "",
+  bankAccountNumber: "",
+  bankName: "",
+  linkedinUrl: "",
+  githubUrl: "",
 };
 
 export default function ManageMentorsPage() {
@@ -61,6 +67,12 @@ export default function ManageMentorsPage() {
       company: m.company,
       experienceYears: m.experienceYears,
       bio: m.bio ?? "",
+      hourlyRate: m.hourlyRate ?? 0,
+      bankAccountName: "",
+      bankAccountNumber: "",
+      bankName: "",
+      linkedinUrl: m.linkedinUrl ?? "",
+      githubUrl: m.githubUrl ?? "",
     });
     setDialogOpen(true);
   };
@@ -146,7 +158,7 @@ export default function ManageMentorsPage() {
                 <div className="space-y-2">
                   <Label>Phone Number</Label>
                   <Input
-                    placeholder="+94 7XX…"
+                    placeholder="07XX XXX XXXX"
                     value={form.phoneNumber}
                     onChange={(e) => setField("phoneNumber", e.target.value)}
                   />

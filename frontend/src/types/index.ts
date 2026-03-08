@@ -74,8 +74,14 @@ export interface MentorDTO {
   bio: string | null;
   profileImageUrl: string | null;
   coverImageUrl: string | null;
+  hourlyRate: number | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
+  bankName: string | null;
   averageRating: number;
   totalReviews: number;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -87,6 +93,12 @@ export interface CreateMentorDTO {
   company: string;
   experienceYears: number;
   bio?: string;
+  hourlyRate: number;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankName: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
 }
 
 export type UpdateMentorDTO = CreateMentorDTO;
@@ -127,6 +139,7 @@ export interface SubjectDTO {
   mentorName: string;
   averageRating: number;
   totalReviews: number;
+  enrollmentCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,12 +147,16 @@ export interface SubjectDTO {
 export interface CreateSubjectDTO {
   name: string;
   description?: string;
+  category?: string;
+  thumbnailUrl?: string;
   mentorId: number;
 }
 
 export interface UpdateSubjectDTO {
   name: string;
   description?: string;
+  category?: string;
+  thumbnailUrl?: string;
 }
 
 /* ── Session ───────────────────────────────────────────────────────────── */
@@ -241,4 +258,31 @@ export interface UpdateSessionResourcesDTO {
 export interface ReviewSessionDTO {
   rating: number;
   review: string;
+}
+
+/* ── Mentor Availability ───────────────────────────────────────────────── */
+
+export type DayOfWeek =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+export interface MentorAvailabilityDTO {
+  id: number;
+  mentorId: number;
+  dayOfWeek: DayOfWeek;
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  isActive: boolean;
+}
+
+export interface CreateMentorAvailabilityDTO {
+  dayOfWeek: DayOfWeek;
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  isActive?: boolean;
 }

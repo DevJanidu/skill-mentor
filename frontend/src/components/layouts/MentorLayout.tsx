@@ -2,6 +2,7 @@ import { UserButton, useUser } from "@clerk/clerk-react";
 import {
   BookOpen,
   CalendarCheck,
+  Clock,
   GraduationCap,
   Inbox,
   LayoutDashboard,
@@ -46,6 +47,12 @@ const NAV_ITEMS = [
     label: "Create Session",
     href: "/mentor/create-session",
     icon: Plus,
+    end: false,
+  },
+  {
+    label: "Availability",
+    href: "/mentor/availability",
+    icon: Clock,
     end: false,
   },
   {

@@ -6,12 +6,16 @@ export default function FinalCTA() {
   return (
     <section className="py-20 px-6">
       <div className="mx-auto max-w-5xl bg-zinc-900 rounded-3xl p-8 md:p-16 text-center text-white">
+        <span className="inline-block text-xs font-semibold uppercase tracking-widest text-zinc-400 bg-zinc-800 rounded-full px-4 py-1.5 mb-6">
+          🇱🇰 Made in Sri Lanka
+        </span>
         <h2 className="text-3xl md:text-5xl font-bold mb-6">
-          Ready to accelerate your career?
+          Your future starts with the right mentor.
         </h2>
         <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
-          Join thousands of students who are already learning from industry
-          experts. Become a student today or share your knowledge as a mentor.
+          Join Sri Lankan students and diaspora learners worldwide who are
+          connecting with industry professionals. Sign up free today — as a
+          student or as a mentor.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link to="/subjects">

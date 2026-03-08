@@ -44,6 +44,12 @@ public class StudentController extends AbstractController {
         return sendOkResponse(studentService.getStudentById(id));
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/by-code/{code}")
+    public ResponseEntity<StudentDTO> getStudentByCode(@PathVariable String code) {
+        return sendOkResponse(studentService.getStudentByCode(code));
+    }
+
 
     @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
     @GetMapping("/{id}/sessions")

@@ -203,16 +203,18 @@ export default function MentorInboxPage() {
             setPage(1);
           }}
         >
-          <TabsList>
-            <TabsTrigger value="ALL">All</TabsTrigger>
-            <TabsTrigger value="PENDING">
-              Pending {pendingCount > 0 && `(${pendingCount})`}
-            </TabsTrigger>
-            <TabsTrigger value="SCHEDULED">Scheduled</TabsTrigger>
-            <TabsTrigger value="STARTED">In Progress</TabsTrigger>
-            <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
-            <TabsTrigger value="CANCELED">Canceled</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-0.5">
+            <TabsList>
+              <TabsTrigger value="ALL">All</TabsTrigger>
+              <TabsTrigger value="PENDING">
+                Pending {pendingCount > 0 && `(${pendingCount})`}
+              </TabsTrigger>
+              <TabsTrigger value="SCHEDULED">Scheduled</TabsTrigger>
+              <TabsTrigger value="STARTED">In Progress</TabsTrigger>
+              <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
+              <TabsTrigger value="CANCELED">Canceled</TabsTrigger>
+            </TabsList>
+          </div>
           <TabsContent value={tab} className="mt-4">
             <Card>
               <CardHeader>

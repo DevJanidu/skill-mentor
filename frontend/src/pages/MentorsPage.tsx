@@ -31,7 +31,7 @@ export default function MentorsPage() {
 
   return (
     <section className="py-16 bg-zinc-50 min-h-screen">
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-12 max-w-2xl">
           <Badge
             variant="secondary"

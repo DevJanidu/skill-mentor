@@ -398,14 +398,16 @@ export default function StudentDashboardPage() {
 
         {/* ── All Sessions (tabbed) ──────────────────────────────── */}
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger value="ALL">All</TabsTrigger>
-            <TabsTrigger value="PENDING">Pending</TabsTrigger>
-            <TabsTrigger value="SCHEDULED">Scheduled</TabsTrigger>
-            <TabsTrigger value="STARTED">In Progress</TabsTrigger>
-            <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
-            <TabsTrigger value="CANCELED">Canceled</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-0.5">
+            <TabsList>
+              <TabsTrigger value="ALL">All</TabsTrigger>
+              <TabsTrigger value="PENDING">Pending</TabsTrigger>
+              <TabsTrigger value="SCHEDULED">Scheduled</TabsTrigger>
+              <TabsTrigger value="STARTED">In Progress</TabsTrigger>
+              <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
+              <TabsTrigger value="CANCELED">Canceled</TabsTrigger>
+            </TabsList>
+          </div>
           <TabsContent value={tab} className="mt-4">
             <Card>
               <CardHeader>

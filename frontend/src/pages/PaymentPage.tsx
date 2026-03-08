@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useSession, useSubmitReceipt, useMentor } from "@/hooks/use-queries";
+import { useSession, useMentor } from "@/hooks/use-queries";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +58,6 @@ export default function PaymentPage() {
   const id = Number(sessionId);
   const { data: session, isLoading } = useSession(id);
   const { data: mentor } = useMentor(session?.mentorId ?? 0);
-  const submitReceipt = useSubmitReceipt();
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -79,18 +78,10 @@ export default function PaymentPage() {
     }
     setUploading(true);
     try {
-      const result = await uploadFile(file);
-      submitReceipt.mutate(
-        { id: session.id, data: { receiptUrl: result.url } },
-        {
-          onSuccess: () => {
-            toast.success(
-              "Payment slip submitted! Waiting for mentor confirmation.",
-            );
-            setSubmitted(true);
-          },
-        },
-      );
+      // Single request: backend uploads to Cloudinary + marks receipt SUBMITTED
+      await uploadFile(file, session.id);
+      toast.success("Payment slip submitted! Waiting for mentor confirmation.");
+      setSubmitted(true);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Upload failed. Please retry.",

@@ -3,6 +3,7 @@ import { useAuth, useUser, SignIn, SignUp } from "@clerk/clerk-react";
 import { useEffect } from "react";
 import { setAuthTokenGetter } from "@/lib/api";
 import { isMentor } from "@/lib/roles";
+import ScrollToTop from "@/components/shared/ScrollToTop";
 
 // Layouts
 import PublicLayout from "@/components/layouts/PublicLayout";
@@ -56,91 +57,97 @@ function App() {
     isSignedIn && isMentor(user?.publicMetadata as Record<string, unknown>);
 
   return (
-    <Routes>
-      {/* ── Auth routes (Clerk hosted pages) ──────────────────────── */}
-      <Route
-        path="sign-in/*"
-        element={
-          <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-            <SignIn routing="path" path="/sign-in" />
-          </div>
-        }
-      />
-      <Route
-        path="sign-up/*"
-        element={
-          <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-            <SignUp routing="path" path="/sign-up" />
-          </div>
-        }
-      />
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* ── Auth routes (Clerk hosted pages) ──────────────────────── */}
+        <Route
+          path="sign-in/*"
+          element={
+            <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+              <SignIn routing="path" path="/sign-in" />
+            </div>
+          }
+        />
+        <Route
+          path="sign-up/*"
+          element={
+            <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+              <SignUp routing="path" path="/sign-up" />
+            </div>
+          }
+        />
 
-      {/* ── Public routes (Navbar + Footer) ───────────────────────── */}
-      <Route element={<PublicLayout />}>
-        <Route index element={<Home />} />
-        <Route path="mentors" element={<MentorsPage />} />
-        <Route path="mentors/:mentorId" element={<MentorProfilePage />} />
-        <Route path="subjects" element={<SubjectsPage />} />
-        <Route path="subjects/:subjectId" element={<SubjectDetailPage />} />
-      </Route>
+        {/* ── Public routes (Navbar + Footer) ───────────────────────── */}
+        <Route element={<PublicLayout />}>
+          <Route index element={<Home />} />
+          <Route path="mentors" element={<MentorsPage />} />
+          <Route path="mentors/:mentorId" element={<MentorProfilePage />} />
+          <Route path="subjects" element={<SubjectsPage />} />
+          <Route path="subjects/:subjectId" element={<SubjectDetailPage />} />
+        </Route>
 
-      {/* ── Onboarding route (signed-in but no role yet) ──────────── */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="onboarding/role" element={<OnboardingRolePage />} />
-      </Route>
+        {/* ── Onboarding route (signed-in but no role yet) ──────────── */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="onboarding/role" element={<OnboardingRolePage />} />
+        </Route>
 
-      {/* ── Protected routes (signed-in + onboarded users) ────────── */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<OnboardingGuard />}>
-          {/* Shared routes inside public layout (students + mentors) */}
-          <Route element={<PublicLayout />}>
-            <Route
-              path="dashboard"
-              element={
-                mentorUser ? (
-                  <Navigate to="/mentor/dashboard" replace />
-                ) : (
-                  <StudentDashboardPage />
-                )
-              }
-            />
-            <Route path="payment/:sessionId" element={<PaymentPage />} />
-            <Route path="sessions/open" element={<OpenGroupSessionsPage />} />
-            <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
-          </Route>
+        {/* ── Protected routes (signed-in + onboarded users) ────────── */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<OnboardingGuard />}>
+            {/* Shared routes inside public layout (students + mentors) */}
+            <Route element={<PublicLayout />}>
+              <Route
+                path="dashboard"
+                element={
+                  mentorUser ? (
+                    <Navigate to="/mentor/dashboard" replace />
+                  ) : (
+                    <StudentDashboardPage />
+                  )
+                }
+              />
+              <Route path="payment/:sessionId" element={<PaymentPage />} />
+              <Route path="sessions/open" element={<OpenGroupSessionsPage />} />
+              <Route
+                path="sessions/:sessionId"
+                element={<SessionDetailPage />}
+              />
+            </Route>
 
-          {/* ── Mentor layout routes ─────────────────────────────── */}
-          <Route path="mentor" element={<MentorLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<MentorDashboardPage />} />
-            <Route path="inbox" element={<MentorInboxPage />} />
-            <Route path="sessions" element={<MentorSessionsPage />} />
-            <Route path="subjects" element={<MentorSubjectsPage />} />
-            <Route
-              path="create-session"
-              element={<MentorCreateSessionPage />}
-            />
-            <Route path="reviews" element={<MentorReviewsPage />} />
-            <Route path="profile" element={<MentorEditProfilePage />} />
-            <Route path="availability" element={<MentorAvailabilityPage />} />
-          </Route>
+            {/* ── Mentor layout routes ─────────────────────────────── */}
+            <Route path="mentor" element={<MentorLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<MentorDashboardPage />} />
+              <Route path="inbox" element={<MentorInboxPage />} />
+              <Route path="sessions" element={<MentorSessionsPage />} />
+              <Route path="subjects" element={<MentorSubjectsPage />} />
+              <Route
+                path="create-session"
+                element={<MentorCreateSessionPage />}
+              />
+              <Route path="reviews" element={<MentorReviewsPage />} />
+              <Route path="profile" element={<MentorEditProfilePage />} />
+              <Route path="availability" element={<MentorAvailabilityPage />} />
+            </Route>
 
-          {/* ── Admin routes ──────────────────────────────────────── */}
-          <Route element={<AdminRoute />}>
-            <Route path="admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboardPage />} />
-              <Route path="bookings" element={<ManageBookingsPage />} />
-              <Route path="subjects" element={<ManageSubjectsPage />} />
-              <Route path="mentors" element={<ManageMentorsPage />} />
-              <Route path="students" element={<ManageStudentsPage />} />
+            {/* ── Admin routes ──────────────────────────────────────── */}
+            <Route element={<AdminRoute />}>
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboardPage />} />
+                <Route path="bookings" element={<ManageBookingsPage />} />
+                <Route path="subjects" element={<ManageSubjectsPage />} />
+                <Route path="mentors" element={<ManageMentorsPage />} />
+                <Route path="students" element={<ManageStudentsPage />} />
+              </Route>
             </Route>
           </Route>
         </Route>
-      </Route>
 
-      {/* ── 404 catch-all ─────────────────────────────────────────── */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* ── 404 catch-all ─────────────────────────────────────────── */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
   );
 }
 

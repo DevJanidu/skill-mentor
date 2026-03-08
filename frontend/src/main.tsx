@@ -21,17 +21,20 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider
-      publishableKey={PUBLISHABLE_KEY}
-      signInFallbackRedirectUrl="/onboarding/role"
-      signUpFallbackRedirectUrl="/onboarding/role"
-    >
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+    {/* BrowserRouter must wrap ClerkProvider so Clerk can use React Router navigation */}
+    <BrowserRouter>
+      <ClerkProvider
+        publishableKey={PUBLISHABLE_KEY}
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        signInFallbackRedirectUrl="/onboarding/role"
+        signUpFallbackRedirectUrl="/onboarding/role"
+      >
+        <QueryClientProvider client={queryClient}>
           <App />
           <Toaster richColors position="top-right" />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ClerkProvider>
+        </QueryClientProvider>
+      </ClerkProvider>
+    </BrowserRouter>
   </StrictMode>,
 );

@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, useClerk } from "@clerk/clerk-react";
 import {
   useMentor,
   useMentorSessions,
@@ -64,6 +64,7 @@ export default function MentorProfilePage() {
   const id = Number(mentorId);
   const navigate = useNavigate();
   const { user, isSignedIn } = useUser();
+  const { redirectToSignIn } = useClerk();
   const { data: mentor, isLoading } = useMentor(id);
   const { data: sessions } = useMentorSessions(id);
   const { data: allSubjects } = useSubjects();
@@ -86,7 +87,8 @@ export default function MentorProfilePage() {
 
   const handleBookClick = () => {
     if (!isSignedIn) {
-      navigate("/sign-in");
+      // Redirect to sign-in and return to this page after auth completes
+      redirectToSignIn({ redirectUrl: window.location.href });
       return;
     }
     if (!isStudent) {

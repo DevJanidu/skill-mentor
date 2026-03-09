@@ -44,6 +44,7 @@ export const useSyncUser = () => {
   return useMutation({
     mutationFn: usersApi.syncCurrentUser,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["currentUser"] }),
+    onError: (e) => toast.error(extractErrorMessage(e)),
   });
 };
 

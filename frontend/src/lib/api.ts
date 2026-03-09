@@ -12,7 +12,7 @@ const api = axios.create({
 // The Clerk JWT template name configured in the Clerk Dashboard.
 // The backend audience claim must match this value.
 // ---------------------------------------------------------------------------
-const CLERK_JWT_TEMPLATE = "skill-mentor";
+export const CLERK_JWT_TEMPLATE = "skill-mentor";
 
 // ---------------------------------------------------------------------------
 // Auth interceptor – attaches the Clerk JWT automatically

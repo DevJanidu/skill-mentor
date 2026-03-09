@@ -1,10 +1,10 @@
-import { useUser } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { GraduationCap, Users, ArrowLeft } from "lucide-react";
+import { GraduationCap, Users, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/hooks/use-queries";
 import { cn } from "@/lib/utils";
 import { getRoles } from "@/lib/roles";
+import { CLERK_JWT_TEMPLATE } from "@/lib/api";
 import type { UserRole } from "@/types";
 
 // ─── Role options ────────────────────────────────────────────────────────────
@@ -390,14 +391,24 @@ function StudentForm({
 
 export default function OnboardingRolePage() {
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const navigate = useNavigate();
 
-  // Step 1 = role picker, step 2 = profile form
-  const [step, setStep] = useState<1 | 2>(1);
+  // Step 1 = role picker, step 2 = profile form, step 3 = welcome/success
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedRole, setSelectedRole] = useState<Extract<
     UserRole,
     "STUDENT" | "MENTOR"
   > | null>(null);
+
+  /**
+   * True while any async work in the submit handlers is running.
+   * Also used to suppress the "already onboarded → redirect" early-exit
+   * check so that calling user.reload() mid-flow (which updates publicMetadata
+   * to the new role) doesn't trigger a premature navigation before the
+   * profile-creation step is complete.
+   */
+  const [isSettingUp, setIsSettingUp] = useState(false);
 
   const syncUser = useSyncUser();
   const completeOnboarding = useCompleteOnboarding();
@@ -405,18 +416,23 @@ export default function OnboardingRolePage() {
   const createStudent = useCreateStudent();
 
   const isPending =
+    isSettingUp ||
     syncUser.isPending ||
     completeOnboarding.isPending ||
     createMentor.isPending ||
     createStudent.isPending;
 
-  // Already onboarded (has STUDENT, MENTOR, or ADMIN role) → redirect away
+  // Already onboarded (has STUDENT, MENTOR, or ADMIN role) → redirect away.
+  // isSettingUp suppresses this check while a submission is in flight so that
+  // user.reload() (which updates publicMetadata to the new role) cannot fire
+  // an early navigation before the profile-creation step completes.
   const existingRoles = user
     ? getRoles(user.publicMetadata as Record<string, unknown>)
     : [];
   if (
     isLoaded &&
     user &&
+    !isSettingUp &&
     (existingRoles.includes("STUDENT") ||
       existingRoles.includes("MENTOR") ||
       existingRoles.includes("ADMIN"))
@@ -447,44 +463,49 @@ export default function OnboardingRolePage() {
   // ── Step 2: Mentor submit ────────────────────────────────────────────────
 
   const handleMentorSubmit = async (formData: MentorFormValues) => {
+    setIsSettingUp(true);
     try {
       // 1. Ensure user exists in DB
       await syncUser.mutateAsync();
-      // 2. Set MENTOR role in Clerk + DB
+      // 2. Persist MENTOR role in both Clerk publicMetadata and the DB
       await completeOnboarding.mutateAsync({ role: "MENTOR" });
-      // 3. Reload Clerk session so next getToken() returns JWT with MENTOR role
+      // 3. Reload the Clerk session so publicMetadata is fresh (MENTOR role),
+      //    and the next getToken() call returns a JWT with the new role.
+      //    isSettingUp=true (set above) keeps the "already onboarded" guard
+      //    from navigating the component away before the profile is created.
       await user?.reload();
-      // 4. Create mentor profile (interceptor will use fresh JWT with MENTOR role)
+      // 4. Force-bust the Clerk JWT cache so the axios interceptor sends the
+      //    new MENTOR JWT for the profile-creation request below.
+      await getToken({ template: CLERK_JWT_TEMPLATE, skipCache: true });
+      // 5. Create the mentor profile — JWT now carries MENTOR role
       await createMentor.mutateAsync(formData);
-      // 5. Final sync to keep DB consistent
-      await syncUser.mutateAsync();
-
-      toast.success("Mentor profile created! Welcome to SkillMentor.");
-      window.location.href = "/dashboard";
+      // 6. Show the welcome screen; navigation happens on "Continue" click
+      setStep(3);
     } catch {
-      // onError callbacks in the mutations handle the toast
+      // onError callbacks in the mutations already handle the error toast
+      setIsSettingUp(false);
     }
   };
 
   // ── Step 2: Student submit ───────────────────────────────────────────────
 
   const handleStudentSubmit = async (formData: StudentFormValues) => {
+    setIsSettingUp(true);
     try {
       // 1. Ensure user exists in DB
       await syncUser.mutateAsync();
-      // 2. Set STUDENT role in Clerk + DB
+      // 2. Persist STUDENT role in both Clerk publicMetadata and the DB
       await completeOnboarding.mutateAsync({ role: "STUDENT" });
-      // 3. Reload Clerk session so next getToken() returns JWT with STUDENT role
+      // 3. Reload Clerk session; publicMetadata is now authoritative (STUDENT)
       await user?.reload();
-      // 4. Create student profile (interceptor will use fresh JWT with STUDENT role)
+      // 4. Bust JWT cache so subsequent API calls carry the fresh STUDENT JWT
+      await getToken({ template: CLERK_JWT_TEMPLATE, skipCache: true });
+      // 5. Create the student profile — JWT now carries STUDENT role
       await createStudent.mutateAsync(formData);
-      // 5. Final sync to keep DB consistent
-      await syncUser.mutateAsync();
-
-      toast.success("Student profile created! Welcome to SkillMentor.");
-      window.location.href = "/dashboard";
+      // 6. Show welcome screen
+      setStep(3);
     } catch {
-      // onError callbacks in the mutations handle the toast
+      setIsSettingUp(false);
     }
   };
 
@@ -493,18 +514,20 @@ export default function OnboardingRolePage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
       <Card className="w-full max-w-lg">
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 pt-6">
-          {[1, 2].map((s) => (
-            <div
-              key={s}
-              className={cn(
-                "h-2 rounded-full transition-all",
-                s === step ? "w-6 bg-zinc-900" : "w-2 bg-zinc-200",
-              )}
-            />
-          ))}
-        </div>
+        {/* Progress indicators (hidden on welcome screen) */}
+        {step !== 3 && (
+          <div className="flex items-center justify-center gap-2 pt-6">
+            {[1, 2].map((s) => (
+              <div
+                key={s}
+                className={cn(
+                  "h-2 rounded-full transition-all",
+                  s === step ? "w-6 bg-zinc-900" : "w-2 bg-zinc-200",
+                )}
+              />
+            ))}
+          </div>
+        )}
 
         {step === 1 ? (
           <>
@@ -580,7 +603,7 @@ export default function OnboardingRolePage() {
               </p>
             </CardContent>
           </>
-        ) : (
+        ) : step === 2 ? (
           <>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold text-zinc-900">
@@ -608,6 +631,34 @@ export default function OnboardingRolePage() {
                   isPending={isPending}
                 />
               )}
+            </CardContent>
+          </>
+        ) : (
+          /* ── Step 3: Welcome / success screen ─────────────────────────── */
+          <>
+            <CardHeader className="text-center pt-8">
+              <div className="flex justify-center mb-4">
+                <CheckCircle2 className="h-14 w-14 text-green-500" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-zinc-900">
+                {selectedRole === "MENTOR"
+                  ? `Welcome, Mentor ${user?.firstName ?? ""}!`
+                  : `Welcome, ${user?.firstName ?? ""}!`}
+              </CardTitle>
+              <CardDescription className="mt-2 text-sm text-zinc-500">
+                {selectedRole === "MENTOR"
+                  ? "Your mentor profile is ready. Head to your dashboard to manage sessions, set availability, and start helping students."
+                  : "Your student account is set up. Head to your dashboard to browse mentors and book your first session."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-8">
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => navigate("/dashboard")}
+              >
+                Continue to Dashboard
+              </Button>
             </CardContent>
           </>
         )}

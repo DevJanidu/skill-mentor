@@ -460,7 +460,7 @@ export default function OnboardingRolePage() {
       await syncUser.mutateAsync();
 
       toast.success("Mentor profile created! Welcome to SkillMentor.");
-      navigate("/dashboard", { replace: true });
+      window.location.href = "/dashboard";
     } catch {
       // onError callbacks in the mutations handle the toast
     }
@@ -482,7 +482,7 @@ export default function OnboardingRolePage() {
       await syncUser.mutateAsync();
 
       toast.success("Student profile created! Welcome to SkillMentor.");
-      navigate("/dashboard", { replace: true });
+      window.location.href = "/dashboard";
     } catch {
       // onError callbacks in the mutations handle the toast
     }

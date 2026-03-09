@@ -60,12 +60,16 @@ public class UserServiceImpl implements UserService {
                         existingUser.setProfileImageUrl(imageUrl);
                     }
 
-                    // CRITICAL FIX: Clear and add all (instead of setRoles)
-                    if (existingUser.getRoles() == null) {
-                        existingUser.setRoles(new ArrayList<>());
+                    // Only update roles while onboarding is not yet complete.
+                    // Once the user has a MENTOR/STUDENT role assigned, never let
+                    // a stale JWT (which still carries the default USER role) clobber it.
+                    if (!Boolean.TRUE.equals(existingUser.getOnboardingCompleted())) {
+                        if (existingUser.getRoles() == null) {
+                            existingUser.setRoles(new ArrayList<>());
+                        }
+                        existingUser.getRoles().clear();
+                        existingUser.getRoles().addAll(mutableRoles);
                     }
-                    existingUser.getRoles().clear();
-                    existingUser.getRoles().addAll(mutableRoles);
 
                     existingUser.setLastLogin(LocalDateTime.now());
                     return existingUser;

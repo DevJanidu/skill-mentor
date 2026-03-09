@@ -85,15 +85,18 @@ public class CloudinaryService {
     // ── Validation ─────────────────────────────────────────────────────
 
     private void validateFile(MultipartFile file) {
+        
         if (file == null || file.isEmpty()) {
             throw new SkillMentorException("Upload file must not be empty", HttpStatus.BAD_REQUEST);
         }
+
         if (file.getSize() > MAX_BYTES) {
             throw new SkillMentorException(
                     "File size exceeds the 5 MB limit (received: "
-                    + (file.getSize() / 1024 / 1024) + " MB)",
+                            + (file.getSize() / 1024 / 1024) + " MB)",
                     HttpStatus.BAD_REQUEST);
         }
+        
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
             throw new SkillMentorException(

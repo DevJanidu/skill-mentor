@@ -15,7 +15,15 @@ if (!PUBLISHABLE_KEY) {
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 },
+    queries: {
+      retry: 1,
+      // Always treat cached data as stale so navigating to a page always
+      // triggers a background refetch (stale-while-revalidate pattern).
+      staleTime: 0,
+      // Re-fetch when the user returns to the browser tab so dashboards
+      // stay current after the user has been away.
+      refetchOnWindowFocus: true,
+    },
   },
 });
 

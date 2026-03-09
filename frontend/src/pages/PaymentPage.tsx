@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession, useMentor } from "@/hooks/use-queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,7 @@ export default function PaymentPage() {
   const { data: session, isLoading } = useSession(id);
   const { data: mentor } = useMentor(session?.mentorId ?? 0);
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -80,6 +82,8 @@ export default function PaymentPage() {
     try {
       // Single request: backend uploads to Cloudinary + marks receipt SUBMITTED
       await uploadFile(file, session.id);
+      // Invalidate session cache so dashboard/detail pages reflect new receipt status
+      qc.invalidateQueries({ queryKey: ["sessions"] });
       toast.success("Payment slip submitted! Waiting for mentor confirmation.");
       setSubmitted(true);
     } catch (err) {

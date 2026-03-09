@@ -526,6 +526,8 @@ export const useSubmitReview = () => {
       sessionsApi.submitReview(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
+      // Also refresh mentor rating stats (averageRating, totalReviews)
+      qc.invalidateQueries({ queryKey: ["mentors"] });
       toast.success("Review submitted!");
     },
     onError: (e) => toast.error(extractErrorMessage(e)),
@@ -538,6 +540,8 @@ export const useDeleteReview = () => {
     mutationFn: (id: number) => sessionsApi.deleteReview(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
+      // Also refresh mentor rating stats (averageRating, totalReviews)
+      qc.invalidateQueries({ queryKey: ["mentors"] });
       toast.success("Review deleted");
     },
     onError: (e) => toast.error(extractErrorMessage(e)),

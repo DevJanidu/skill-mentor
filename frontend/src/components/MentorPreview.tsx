@@ -29,7 +29,7 @@ const mentors = [
     rating: "4.9",
     reviews: 41,
     experience: "6 Years",
-    subjects: ["Test Automation", "LLM", "QA", "LLM'S"],
+    subjects: ["Test Automation", "QA", "LLM'S"],
     img: "https://media.licdn.com/dms/image/v2/D5603AQE2ZCSBxEey4Q/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1718259034291?e=1774483200&v=beta&t=-jB0jafkbIutQdyrE2fJwFOIYREG9vX85u-KAhlwy9c",
   },
   {

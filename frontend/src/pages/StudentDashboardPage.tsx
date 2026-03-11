@@ -204,6 +204,28 @@ export default function StudentDashboardPage() {
                   </button>
                 </div>
               )}
+              {student?.learningGoals && (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
+                    Learning Goals
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {student.learningGoals
+                      .split(",")
+                      .map((g) => g.trim())
+                      .filter(Boolean)
+                      .map((goal) => (
+                        <Badge
+                          key={goal}
+                          variant="secondary"
+                          className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100"
+                        >
+                          {goal}
+                        </Badge>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

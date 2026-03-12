@@ -179,15 +179,22 @@ public class MentorServiceImpl implements MentorService {
                     ));
 
             mentorRepository.deleteById(id);
+            mentorRepository.flush();
             userService.deleteUser(user.getClerkId());
             log.info("Mentor deleted successfully: {}", id);
             log.info("User deleted successfully: {}", user.getClerkId());
         }catch (SkillMentorException e){
             throw e;
+        }catch (DataIntegrityViolationException e){
+            log.warn("Cannot delete mentor {} — related records exist", id);
+            throw new SkillMentorException(
+                    "Cannot delete this mentor because they have existing sessions or subjects. Please remove their sessions and subjects first.",
+                    HttpStatus.CONFLICT
+            );
         }catch (Exception e){
             log.error("Unexpected error deleting mentor {}", id, e);
             throw new SkillMentorException(
-                    "Internal server error while deleting mentor",
+                    "An unexpected error occurred while deleting the mentor. Please try again.",
                     HttpStatus.INTERNAL_SERVER_ERROR
             );
         }

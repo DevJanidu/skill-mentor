@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   useSubjects,
   useDeleteSubject,
@@ -41,6 +42,7 @@ export default function ManageSubjectsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<SubjectDTO | null>(null);
   const [search, setSearch] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -111,9 +113,7 @@ export default function ManageSubjectsPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Delete this subject?")) deleteMut.mutate(id);
-  };
+  const handleDelete = (id: number) => setConfirmDeleteId(id);
 
   const filtered = subjects?.filter(
     (s) =>
@@ -311,6 +311,17 @@ export default function ManageSubjectsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}
+        title="Delete Subject"
+        description="This action cannot be undone. Are you sure you want to delete this subject?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => { if (confirmDeleteId !== null) deleteMut.mutate(confirmDeleteId); }}
+        isPending={deleteMut.isPending}
+      />
     </div>
   );
 }

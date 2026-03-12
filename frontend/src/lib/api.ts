@@ -53,6 +53,7 @@ export interface ApiErrorBody {
 /**
  * Returns a user-facing error string from an Axios error.
  * Includes field-level validation messages when the backend returns them.
+ * Maps HTTP status codes to friendly descriptions when the backend message is too technical.
  */
 export function extractErrorMessage(error: unknown): string {
   const axiosErr = error as AxiosError<ApiErrorBody>;
@@ -64,6 +65,19 @@ export function extractErrorMessage(error: unknown): string {
     }
     if (data.message) return data.message;
   }
+
+  // Fallback: friendly messages by HTTP status when no backend message available
+  const status = axiosErr.response?.status;
+  if (status === 409)
+    return "Cannot complete this action because the record is linked to other data. Remove related records first.";
+  if (status === 403)
+    return "You don't have permission to perform this action.";
+  if (status === 404) return "The requested record was not found.";
+  if (status === 400)
+    return "The request was invalid. Please check your input.";
+  if (status && status >= 500)
+    return "Something went wrong on the server. Please try again later.";
+
   if (axiosErr.message) return axiosErr.message;
   return "An unexpected error occurred";
 }

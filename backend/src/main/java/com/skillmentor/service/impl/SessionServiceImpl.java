@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -347,7 +348,16 @@ public class SessionServiceImpl implements SessionService {
                         HttpStatus.NOT_FOUND
                 ));
 
-        sessionRepository.delete(session);
+        try {
+            sessionRepository.delete(session);
+            sessionRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Cannot delete session {} — related records exist", id);
+            throw new SkillMentorException(
+                    "Cannot delete this session because it has related records. Please try canceling the session instead.",
+                    HttpStatus.CONFLICT
+            );
+        }
     }
 
 

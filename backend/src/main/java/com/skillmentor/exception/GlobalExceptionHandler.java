@@ -204,11 +204,17 @@ public class GlobalExceptionHandler {
 
         log.warn("Data integrity violation at {}", request.getRequestURI(), ex);
 
+        String method = request.getMethod();
+        String message;
+        if ("DELETE".equalsIgnoreCase(method)) {
+            message = "Cannot delete this record because it is linked to other data. Please remove the related records first.";
+        } else {
+            message = "This action could not be completed because it conflicts with existing data. A duplicate entry may already exist.";
+        }
+
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(buildError(HttpStatus.CONFLICT,
-                        "The request conflicts with existing data (duplicate or integrity constraint violation)",
-                        null, request));
+                .body(buildError(HttpStatus.CONFLICT, message, null, request));
     }
 
     // ── 500 — LazyInitializationException safety net (should not happen) ─

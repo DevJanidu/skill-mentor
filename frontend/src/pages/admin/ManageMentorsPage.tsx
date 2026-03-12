@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   useMentors,
   useDeleteMentor,
@@ -48,6 +49,7 @@ export default function ManageMentorsPage() {
   const [editing, setEditing] = useState<MentorDTO | null>(null);
   const [form, setForm] = useState<CreateMentorDTO>(empty);
   const [search, setSearch] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const resetForm = () => {
     setForm(empty);
@@ -99,9 +101,7 @@ export default function ManageMentorsPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Delete this mentor?")) deleteMut.mutate(id);
-  };
+  const handleDelete = (id: number) => setConfirmDeleteId(id);
 
   const filtered = mentors?.filter(
     (m) =>
@@ -305,6 +305,17 @@ export default function ManageMentorsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}
+        title="Delete Mentor"
+        description="This action cannot be undone. Are you sure you want to delete this mentor?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => { if (confirmDeleteId !== null) deleteMut.mutate(confirmDeleteId); }}
+        isPending={deleteMut.isPending}
+      />
     </div>
   );
 }

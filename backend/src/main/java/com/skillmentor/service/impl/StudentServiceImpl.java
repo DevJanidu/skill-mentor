@@ -140,14 +140,20 @@ public class StudentServiceImpl implements StudentService {
                             HttpStatus.NOT_FOUND
                     ));
             studentRepository.delete(student);
+            studentRepository.flush();
             log.debug("Deleting student with id {}", id);
             userService.deleteUser(user.getClerkId());
             log.debug("Deleting user with id {}", user.getClerkId());
         }catch (SkillMentorException e){
             throw  e;
+        }catch (DataIntegrityViolationException e){
+            log.warn("Cannot delete student {} — related records exist", id);
+            throw new SkillMentorException(
+                    "Cannot delete this student because they have existing sessions. Please cancel or delete their sessions first.",
+                    HttpStatus.CONFLICT);
         }catch (Exception e){
-            log.error("failed to delete the student: {}",id);
-            throw new SkillMentorException("failed to delete the student"
+            log.error("failed to delete the student: {}",id, e);
+            throw new SkillMentorException("An unexpected error occurred while deleting the student. Please try again."
                     ,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

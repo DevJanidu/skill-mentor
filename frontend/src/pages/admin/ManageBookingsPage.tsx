@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   useSessions,
   useUpdateSession,
@@ -76,6 +77,9 @@ export default function ManageBookingsPage() {
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [editingSession, setEditingSession] = useState<SessionDTO | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [confirmPayment, setConfirmPayment] = useState<SessionDTO | null>(null);
+  const [confirmComplete, setConfirmComplete] = useState<SessionDTO | null>(null);
 
   // Edit form
   const [editStatus, setEditStatus] = useState<SessionStatus>("PENDING");
@@ -105,24 +109,11 @@ export default function ManageBookingsPage() {
     );
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Delete this booking?")) deleteMut.mutate(id);
-  };
+  const handleDelete = (id: number) => setConfirmDelete(id);
 
-  const handleConfirmPayment = (s: SessionDTO) => {
-    if (window.confirm(`Confirm payment receipt for booking #${s.id}?`)) {
-      approveMut.mutate({
-        id: s.id,
-        data: { meetingLink: s.meetingLink ?? "" },
-      });
-    }
-  };
+  const handleConfirmPayment = (s: SessionDTO) => setConfirmPayment(s);
 
-  const handleMarkComplete = (s: SessionDTO) => {
-    if (window.confirm(`Mark booking #${s.id} as completed?`)) {
-      completeMut.mutate({ id: s.id });
-    }
-  };
+  const handleMarkComplete = (s: SessionDTO) => setConfirmComplete(s);
 
   const q = search.toLowerCase();
   const filtered = sessions
@@ -465,6 +456,43 @@ export default function ManageBookingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        onOpenChange={(o) => { if (!o) setConfirmDelete(null); }}
+        title="Delete Booking"
+        description="This action cannot be undone. Are you sure you want to delete this booking?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => { if (confirmDelete !== null) deleteMut.mutate(confirmDelete); }}
+        isPending={deleteMut.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmPayment !== null}
+        onOpenChange={(o) => { if (!o) setConfirmPayment(null); }}
+        title="Confirm Payment"
+        description={`Confirm payment receipt for booking #${confirmPayment?.id}?`}
+        confirmLabel="Confirm"
+        variant="default"
+        onConfirm={() => {
+          if (confirmPayment) {
+            approveMut.mutate({ id: confirmPayment.id, data: { meetingLink: confirmPayment.meetingLink ?? "" } });
+          }
+        }}
+        isPending={approveMut.isPending}
+      />
+
+      <ConfirmDialog
+        open={confirmComplete !== null}
+        onOpenChange={(o) => { if (!o) setConfirmComplete(null); }}
+        title="Mark as Completed"
+        description={`Mark booking #${confirmComplete?.id} as completed?`}
+        confirmLabel="Complete"
+        variant="default"
+        onConfirm={() => { if (confirmComplete) completeMut.mutate({ id: confirmComplete.id }); }}
+        isPending={completeMut.isPending}
+      />
     </div>
   );
 }

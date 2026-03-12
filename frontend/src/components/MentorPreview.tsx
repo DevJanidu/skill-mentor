@@ -15,7 +15,7 @@ const mentors = [
   {
     name: "Janidu Yapa",
     title: "Software Engineer Intern",
-    company: "Applantics",
+    company: "Skill mentor",
     rating: "5.0",
     reviews: 18,
     experience: "1 Year",
@@ -25,7 +25,7 @@ const mentors = [
   {
     name: "Ushan Wijekoon",
     title: "Software Quality Engineer",
-    company: "LSEG",
+    company: "Skill mentor",
     rating: "4.9",
     reviews: 41,
     experience: "6 Years",
@@ -33,14 +33,14 @@ const mentors = [
     img: "https://media.licdn.com/dms/image/v2/D5603AQE2ZCSBxEey4Q/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1718259034291?e=1774483200&v=beta&t=-jB0jafkbIutQdyrE2fJwFOIYREG9vX85u-KAhlwy9c",
   },
   {
-    name: "Ravindu Yapa",
-    title: "Biology Teacher",
-    company: "Horizon College ",
-    rating: "4.8",
-    reviews: 27,
-    experience: "1 Year",
-    subjects: ["Biology", "English", "Maths"],
-    img: "https://media.licdn.com/dms/image/v2/D5603AQECGrdATgNXdA/profile-displayphoto-shrink_800_800/B56ZUDRQG1HQAc-/0/1739516609405?e=1774483200&v=beta&t=9dlYrBGEwWhzXpO8DDJoyAMrCPPFon2bw6kccE9tS38",
+    name: "Kavindu Fernando",
+    title: "Mathematics Teacher",
+    company: "Skill mentor",
+    rating: "4.7",
+    reviews: 35,
+    experience: "4 Years",
+    subjects: ["Mathematics", "Statistics"],
+    img: "https://randomuser.me/api/portraits/men/45.jpg",
   },
 ];
 
